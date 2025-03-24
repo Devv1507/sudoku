@@ -17,7 +17,7 @@ public class GameView extends Stage {
         );
         Scene scene = new Scene(fxmlLoader.load());
         this.controller = fxmlLoader.getController();
-        this.setTitle("6x6 Sudoku");
+        this.setTitle("6x6 Sudoku Game");
         this.setScene(scene);
     }
 
