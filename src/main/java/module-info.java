@@ -1,6 +1,7 @@
 module univalle.tedesoft.sudoku {
     requires javafx.controls;
     requires javafx.fxml;
+    requires javafx.graphics;
 
 
     opens univalle.tedesoft.sudoku to javafx.fxml;
