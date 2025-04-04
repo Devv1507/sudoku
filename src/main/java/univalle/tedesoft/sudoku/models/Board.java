@@ -128,7 +128,7 @@ public class Board {
         Collections.shuffle(numbers);
 
         for (int num : numbers) {
-            if (isValidPlacementForGeneration(row, col, num)) { // Usa método específico para generación
+            if (isValidPlacementForGeneration(row, col, num)) {
                 grid[row][col].setValue(num);
                 if (generateSolution(row, col + 1)) return true;
                 grid[row][col].setValue(0); // Backtrack

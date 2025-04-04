@@ -1,7 +1,6 @@
 package univalle.tedesoft.sudoku.models;
 
 import javafx.util.Pair;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -11,7 +10,7 @@ import java.util.Set;
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
  */
-public class GameState {
+public class GameState{
     /**
      * Referencia al tablero de Sudoku que se está validando.
      * @see Board
@@ -70,12 +69,12 @@ public class GameState {
         for (int column = 0; column < size; column++) {
             Set<Integer> seenInCol = new HashSet<>();
             Set<Pair<Integer, Integer>> colDuplicates = new HashSet<>();
-            for (int row = 0; row < size; rrow++) {
+            for (int row = 0; row < size; row++) {
                 int value = grid[row][column].getValue();
                 if (value != 0) {
                     if (!seenInCol.add(value)) {
                         colDuplicates.add(new Pair<>(row, column));
-                         for(int prevR = 0; prevR < row; prevR++) {
+                        for(int prevR = 0; prevR < row; prevR++) {
                             if(grid[prevR][column].getValue() == value) {
                                 colDuplicates.add(new Pair<>(prevR, column));
                             }
@@ -83,7 +82,7 @@ public class GameState {
                     }
                 }
             }
-             invalidCells.addAll(colDuplicates);
+            invalidCells.addAll(colDuplicates);
         }
 
         // 3. Validar Bloques usando los objetos Block del Board
@@ -107,21 +106,21 @@ public class GameState {
         return invalidCells;
     }
 
-     /**
+    /**
      * Verifica si el tablero está completamente lleno (sin celdas vacías).
      * @return true si todas las celdas tienen un valor distinto de 0, false en caso contrario.
      */
-     public boolean isBoardFull() {
-         // Podemos usar el grid del board directamente aquí, ya que solo leemos valores.
-         for (int r = 0; r < Board.GRID_SIZE; r++) {
-             for (int c = 0; c < Board.GRID_SIZE; c++) {
-                 if (board.getCell(r, c).getValue() == 0) {
-                     return false; // Encontró una celda vacía
-                 }
-             }
-         }
-         return true; // No se encontraron celdas vacías
-     }
+    public boolean isBoardFull() {
+        // Podemos usar el grid del board directamente aquí, ya que solo leemos valores.
+        for (int r = 0; r < Board.GRID_SIZE; r++) {
+            for (int c = 0; c < Board.GRID_SIZE; c++) {
+                if (board.getCell(r, c).getValue() == 0) {
+                    return false; // Encontró una celda vacía
+                }
+            }
+        }
+        return true; // No se encontraron celdas vacías
+    }
 
     /**
      * Comprueba si el juego ha sido completado exitosamente.
@@ -131,6 +130,9 @@ public class GameState {
     public boolean isGameWon() {
         if (this.isBoardFull() && this.isBoardValid()) {
             return true;
+            //Agregue esto por unos errores que me exigian una segunda condicio, se puede borrar si se encuentra otra solucion
+        }else{
+            return false;
         }
     }
 
@@ -142,13 +144,13 @@ public class GameState {
      */
     public int getSuggestion(int row, int col) {
         Cell cell = board.getCell(row, col);
-        if (!cell.isEditable() || cell.getValue() != 0) {
+        if (!cell.getEditable() || cell.getValue() != 0) {
             return 0;
         }
         for (int num = 1; num <= Board.GRID_SIZE; num++) {
-             if (this.isPlacementPotentiallyValid(row, col, num)) {
-                 return num;
-             }
+            if (this.isPlacementPotentiallyValid(row, col, num)) {
+                return num;
+            }
         }
         return 0;
     }
@@ -157,8 +159,8 @@ public class GameState {
      * Función auxiliar para verificar si un número *podría* ser colocado
      * en una celda vacía sin violar inmediatamente las reglas.
      */
-     private boolean isPlacementPotentiallyValid(int row, int col, int num) {
-         // Usa el estado actual del board directamente
+    private boolean isPlacementPotentiallyValid(int row, int col, int num) {
+        // Usa el estado actual del board directamente
         // Comprobar fila
         for (int c = 0; c < Board.GRID_SIZE; c++) {
             if (board.getCell(row,c).getValue() == num) return false;
@@ -171,9 +173,9 @@ public class GameState {
         Block block = board.getBlockAt(row, col); // Obtener el bloque relevante
         for(int r=0; r<Block.BLOCK_ROWS; r++){
             for(int c=0; c<Block.BLOCK_COLS; c++){
-                 if(block.getCell(r, c).getValue() == num) return false;
+                if(block.getCell(r, c).getValue() == num) return false;
             }
         }
         return true;
-     }
+    }
 }
