@@ -13,12 +13,12 @@ import java.util.Set;
  */
 public class Block {
     /**
-     * Número de filas en un bloque.
+     * Constante del número de filas en un bloque.
      * En este caso, 2 filas.
      */
     public static final int BLOCK_ROWS = 2;
     /**
-     * Número de columnas en un bloque.
+     * Constante del número de columnas en un bloque.
      * En este caso, 3 columnas.
      */
     public static final int BLOCK_COLS = 3;
@@ -53,15 +53,15 @@ public class Block {
              throw new IllegalArgumentException("La cuadrícula del tablero proporcionada es inválida.");
         }
 
-        this.startRow = startRow;
-        this.startCol = startCol;
-
         // Llenar la matriz local 'cells' con referencias a las celdas correspondientes del 'boardGrid'.
         for (int row = 0; row < BLOCK_ROWS; row++) {
             for (int col = 0; col < BLOCK_COLS; col++) {
                 this.cells[row][col] = boardGrid[startRow + row][startCol + col];
             }
         }
+
+        this.startRow = startRow;
+        this.startCol = startCol;
     }
 
     /**

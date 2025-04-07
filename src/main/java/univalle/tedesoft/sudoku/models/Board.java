@@ -102,8 +102,8 @@ public class Board {
     private void clearBoard() {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
-                grid[i][j].setValue(0);
-                grid[i][j].setEditable(true);
+                this.grid[i][j].setEditable(true);
+                this.grid[i][j].setValue(0);
             }
         }
     }
@@ -119,9 +119,13 @@ public class Board {
         if (col == GRID_SIZE) {
             col = 0;
             row++;
-            if (row == GRID_SIZE) return true;
+            if (row == GRID_SIZE) {
+                return true;
+            }
         }
-        if (grid[row][col].getValue() != 0) return generateSolution(row, col + 1);
+        if (this.grid[row][col].getValue() != 0) {
+            return generateSolution(row, col + 1);
+        }
 
         List<Integer> numbers = new ArrayList<>();
         for (int i = 1; i <= GRID_SIZE; i++) numbers.add(i);
@@ -129,9 +133,11 @@ public class Board {
 
         for (int num : numbers) {
             if (isValidPlacementForGeneration(row, col, num)) {
-                grid[row][col].setValue(num);
-                if (generateSolution(row, col + 1)) return true;
-                grid[row][col].setValue(0); // Backtrack
+                this.grid[row][col].setValue(num);
+                if (generateSolution(row, col + 1)) {
+                    return true;
+                }
+                this.grid[row][col].setValue(0); // Backtrack
             }
         }
         return false;
@@ -206,8 +212,8 @@ public class Board {
     private void saveInitialState() {
         for (int i = 0; i < GRID_SIZE; i++) {
             for (int j = 0; j < GRID_SIZE; j++) {
-                initialGridState[i][j].setValue(grid[i][j].getValue());
-                initialGridState[i][j].setEditable(false); // Marcar como no editable en la referencia
+                this.initialGridState[i][j].setValue(grid[i][j].getValue());
+                this.initialGridState[i][j].setEditable(false); // Marcar como no editable en la referencia
             }
         }
     }
@@ -220,7 +226,11 @@ public class Board {
      */
     private void makePuzzle() {
          List<int[]> allCells = new ArrayList<>();
-         for (int r = 0; r < GRID_SIZE; r++) for (int c = 0; c < GRID_SIZE; c++) allCells.add(new int[]{r, c});
+         for (int r = 0; r < GRID_SIZE; r++) {
+             for (int c = 0; c < GRID_SIZE; c++) {
+                 allCells.add(new int[]{r, c});
+             }
+         }
          Collections.shuffle(allCells);
 
          int fixedCellsCount = 0;
@@ -230,25 +240,25 @@ public class Board {
 
          for (int[] cellCoord : allCells) {
              if (fixedCellsCount >= targetFixedCells) break;
-             int r = cellCoord[0];
-             int c = cellCoord[1];
-             int blockIndex = (r / BLOCK_ROWS) * NUM_BLOCK_COLS + (c / BLOCK_COLS);
+             int row = cellCoord[0];
+             int col = cellCoord[1];
+             int blockIndex = (row / BLOCK_ROWS) * NUM_BLOCK_COLS + (col / BLOCK_COLS);
 
              if (fixedInBlock[blockIndex] < FIXED_CELLS_PER_BLOCK) {
-                 isFixed[r][c] = true;
+                 isFixed[row][col] = true;
                  fixedInBlock[blockIndex]++;
                  fixedCellsCount++;
              }
          }
 
-         for (int r = 0; r < GRID_SIZE; r++) {
-             for (int c = 0; c < GRID_SIZE; c++) {
-                 if (isFixed[r][c]) {
-                     grid[r][c].setValue(initialGridState[r][c].getValue()); // Restaurar valor de la solución
-                     grid[r][c].setEditable(false);                         // Marcar como no editable
+         for (int row = 0; row < GRID_SIZE; row++) {
+             for (int col = 0; col < GRID_SIZE; col++) {
+                 if (isFixed[row][col]) {
+                     this.grid[row][col].setValue(this.initialGridState[row][col].getValue()); // Restaurar valor de la solución
+                     this.grid[row][col].setEditable(false);                         // Marcar como no editable
                  } else {
-                     grid[r][c].setValue(0);     // Vaciar celda
-                     grid[r][c].setEditable(true); // Marcar como editable
+                     this.grid[row][col].setValue(0);     // Vaciar celda
+                     this.grid[row][col].setEditable(true); // Marcar como editable
                  }
              }
          }
@@ -286,7 +296,7 @@ public class Board {
         if (value < 0 || value > GRID_SIZE) {
             throw new IllegalArgumentException("Valor inválido para celda: " + value);
         }
-        Cell cell = getCell(row, col);
+        Cell cell = this.getCell(row, col);
         boolean isCellEditable = cell.getEditable();
         if (isCellEditable) {
             cell.setValue(value);
@@ -308,7 +318,7 @@ public class Board {
         }
         int blockRow = row / BLOCK_ROWS;
         int blockCol = col / BLOCK_COLS;
-        return blocks[blockRow][blockCol];
+        return this.blocks[blockRow][blockCol];
     }
 
     /**

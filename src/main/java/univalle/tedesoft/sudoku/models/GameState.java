@@ -112,9 +112,9 @@ public class GameState{
      */
     public boolean isBoardFull() {
         // Podemos usar el grid del board directamente aquí, ya que solo leemos valores.
-        for (int r = 0; r < Board.GRID_SIZE; r++) {
-            for (int c = 0; c < Board.GRID_SIZE; c++) {
-                if (board.getCell(r, c).getValue() == 0) {
+        for (int row = 0; row < Board.GRID_SIZE; row++) {
+            for (int col = 0; col < Board.GRID_SIZE; col++) {
+                if (this.board.getCell(row, col).getValue() == 0) {
                     return false; // Encontró una celda vacía
                 }
             }
@@ -143,7 +143,7 @@ public class GameState{
      * @return Un número válido (1-6) que puede ir en esa celda, o 0 si no procede.
      */
     public int getSuggestion(int row, int col) {
-        Cell cell = board.getCell(row, col);
+        Cell cell = this.board.getCell(row, col);
         if (!cell.getEditable() || cell.getValue() != 0) {
             return 0;
         }
@@ -163,17 +163,23 @@ public class GameState{
         // Usa el estado actual del board directamente
         // Comprobar fila
         for (int c = 0; c < Board.GRID_SIZE; c++) {
-            if (board.getCell(row,c).getValue() == num) return false;
+            if (this.board.getCell(row,c).getValue() == num) {
+                return false;
+            }
         }
         // Comprobar columna
         for (int r = 0; r < Board.GRID_SIZE; r++) {
-            if (board.getCell(r,col).getValue() == num) return false;
+            if (this.board.getCell(r,col).getValue() == num) {
+                return false;
+            }
         }
         // Comprobar bloque
-        Block block = board.getBlockAt(row, col); // Obtener el bloque relevante
+        Block block = this.board.getBlockAt(row, col); // Obtener el bloque relevante
         for(int r=0; r<Block.BLOCK_ROWS; r++){
             for(int c=0; c<Block.BLOCK_COLS; c++){
-                if(block.getCell(r, c).getValue() == num) return false;
+                if(block.getCell(r, c).getValue() == num) {
+                    return false;
+                }
             }
         }
         return true;
