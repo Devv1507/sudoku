@@ -199,19 +199,6 @@ public class GameController {
         }
     }
 
-    // --- Métodos llamados por la Vista para notificar eventos ---
-
-    /**
-     * Llamado por GameView cuando el usuario hace clic en una celda.
-     * @param row Fila de la celda.
-     * @param col Columna de la celda.
-     */
-    public void cellClicked(int row, int col) {
-        // En esta versión, la vista maneja la creación/foco del TextField.
-        // El controlador podría usar esto para otra lógica si fuera necesario.
-        // System.out.println("Controller notificado: Clic en (" + row + "," + col + ")");
-    }
-
     /**
      * Llamado por GameView cuando el texto de un TextField cambia.
      * Actualiza el modelo y desencadena la validación y posible condición de victoria.
