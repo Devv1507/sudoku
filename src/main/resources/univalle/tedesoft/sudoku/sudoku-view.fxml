@@ -40,8 +40,8 @@
       </GridPane>
       <HBox alignment="CENTER" minHeight="30.0" spacing="10.0" VBox.vgrow="ALWAYS">
          <children>
-            <Button fx:id="initButton" mnemonicParsing="false" text="Iniciar" />
             <Button fx:id="restartButton" mnemonicParsing="false" text="Reiniciar" />
+            <Button fx:id="cleanButton" mnemonicParsing="false" text="Limpiar" />
             <Button fx:id="helpButton" mnemonicParsing="false" text="Ayuda" />
          </children>
       </HBox>
