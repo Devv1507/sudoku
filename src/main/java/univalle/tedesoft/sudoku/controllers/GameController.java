@@ -1,18 +1,19 @@
 package univalle.tedesoft.sudoku.controllers;
 
+import univalle.tedesoft.sudoku.models.Board;
+import univalle.tedesoft.sudoku.models.Cell;
+import univalle.tedesoft.sudoku.models.GameState;
+import univalle.tedesoft.sudoku.views.GameView;
+
+import java.util.Optional;
+import java.util.Set;
+
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
-import javafx.scene.layout.GridPane; // Necesario para obtener la referencia inicial
+import javafx.scene.layout.GridPane;
 import javafx.util.Pair;
-import univalle.tedesoft.sudoku.models.Board;
-import univalle.tedesoft.sudoku.models.Cell;
-import univalle.tedesoft.sudoku.models.GameState;
-import univalle.tedesoft.sudoku.views.GameView; // Importar la vista
-
-import java.util.Optional;
-import java.util.Set;
 
 /**
  * Controlador (en patrón MVC) para el juego Sudoku.

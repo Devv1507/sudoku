@@ -1,10 +1,11 @@
 package univalle.tedesoft.sudoku;
 
-import javafx.application.Application;
-import javafx.stage.Stage;
+import univalle.tedesoft.sudoku.views.GameView;
 
 import java.io.IOException;
-import univalle.tedesoft.sudoku.views.GameView;
+
+import javafx.application.Application;
+import javafx.stage.Stage;
 
 public class Main extends Application {
     @Override

@@ -1,5 +1,10 @@
 package univalle.tedesoft.sudoku.views;
 
+import univalle.tedesoft.sudoku.Main;
+import univalle.tedesoft.sudoku.controllers.GameController;
+import univalle.tedesoft.sudoku.models.Board;
+import univalle.tedesoft.sudoku.models.Cell;
+
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -11,10 +16,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.util.Pair;
-import univalle.tedesoft.sudoku.Main;
-import univalle.tedesoft.sudoku.controllers.GameController;
-import univalle.tedesoft.sudoku.models.Board;
-import univalle.tedesoft.sudoku.models.Cell;
 
 import java.io.IOException;
 import java.net.URL;
