@@ -58,6 +58,7 @@ public class Board {
      * Constructor del tablero. Inicializa la cuadrícula de celdas vacías y los bloques.
      */
     public Board() {
+        // Arreglos donde se alojarán las celdas del sudoku
         this.grid = new Cell[GRID_SIZE][GRID_SIZE];
         this.initialGridState = new Cell[GRID_SIZE][GRID_SIZE];
         this.blocks = new Block[NUM_BLOCK_ROWS][NUM_BLOCK_COLS];
