@@ -1,50 +1,32 @@
 package univalle.tedesoft.sudoku.controllers;
 
 import javafx.fxml.FXML;
-import javafx.geometry.Pos;
-import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.control.*;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
+import javafx.scene.layout.GridPane; // Necesario para obtener la referencia inicial
 import javafx.util.Pair;
-
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
-import java.util.function.UnaryOperator;
-import java.util.regex.Pattern;
-
 import univalle.tedesoft.sudoku.models.Board;
 import univalle.tedesoft.sudoku.models.Cell;
 import univalle.tedesoft.sudoku.models.GameState;
+import univalle.tedesoft.sudoku.views.GameView; // Importar la vista
+
+import java.util.Optional;
+import java.util.Set;
 
 /**
- * Controlador para la vista principal del juego Sudoku (Refactorizado sin CSS externo).
- * Maneja la interacción del usuario con el tablero y los botones de control.
- * Implementa la creación dinámica de campos de texto y la validación del tablero.
- * Incluye mejoras: caché de nodos, gestión inteligente de errores, comprobación de victoria.
+ * Controlador (en patrón MVC) para el juego Sudoku.
+ * Conecta la Vista (GameView) con el Modelo (Board, GameState).
+ * Maneja la lógica del juego y las acciones del usuario delegadas por la vista.
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
- * @version 1.2 (Botones Reiniciar/Limpiar ajustados)
+ * @version 1.3 (Refactorizado MVC)
  */
 public class GameController {
 
-    private static final int GRID_SIZE = Board.GRID_SIZE;
-    private static final int BLOCK_ROWS = Board.BLOCK_ROWS; // 2
-    private static final int BLOCK_COLS = Board.BLOCK_COLS; // 3
-    private static final String STYLE_FONT_SIZE = "-fx-font-size: 16px;";
-    private static final String STYLE_FONT_BOLD = "-fx-font-weight: bold;";
-    private static final String STYLE_ALIGNMENT_CENTER = "-fx-alignment: center;";
-    private static final String BORDER_COLOR_NORMAL = "lightgray";
-    private static final String BORDER_COLOR_BLOCK = "black";
-    private static final String BORDER_COLOR_ERROR = "red";
-    private static final String BORDER_WIDTH_NORMAL = "0.5px";
-    private static final String BORDER_WIDTH_BLOCK = "2px"; // Borde grueso para bloques Y errores
-    private static final String BORDER_STYLE_SOLID = "-fx-border-style: solid;";
+    private Board board;
+    private GameState gameState;
+    private GameView view;
 
     @FXML private Button clueButton;
     @FXML private Button helpButton;
@@ -52,531 +34,262 @@ public class GameController {
     @FXML private Button cleanButton;
     @FXML private GridPane sudokuGridPane;
 
-    private Board board;
-    private GameState gameState;
-    private TextField currentEditingTextField = null;
-    private Node[][] nodeGrid = new Node[GRID_SIZE][GRID_SIZE];
-    private Set<Pair<Integer, Integer>> currentErrors = new HashSet<>();
-
+    /**
+     * Inicializa el modelo y configura los manejadores de eventos de los botones.
+     * La vista se inicializa por separado y se conecta mediante setView.
+     */
     @FXML
     public void initialize() {
+        // Crear instancias del modelo
         this.board = new Board();
         this.gameState = new GameState(board);
 
-        // manejar el evento de clickear sobre la grilla
-        this.sudokuGridPane.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleGridClick);
-
-        // inicia un juego completamente nuevo
+        // Configurar acciones de los botones
         this.restartButton.setOnAction(event -> startNewGame());
-        // borra las entradas del usuario en el juego actual
         this.cleanButton.setOnAction(event -> clearUserEntries());
-        // abrir la ventana de instrucciones
         this.helpButton.setOnAction(event -> showHelp());
-        // obtener pista de una posible entrada
-        this.clueButton.setOnAction(event -> showClue()); // Descomentado, asumiendo que la lógica existe
+        this.clueButton.setOnAction(event -> showClue());
 
-        // Iniciar el primer juego
-        this.board.initializeBoard();
-        this.updateGridUI();
-    }
-
-    /**
-     * Inicia un juego completamente nuevo generando un nuevo puzzle.
-     * Muestra una confirmación previa.
-     * Asociado al botón "Reiniciar".
-     */
-    private void startNewGame() {
-        // Confirmación antes de iniciar nuevo juego
-        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION, "Esto generará un tablero de Sudoku completamente nuevo, perdiendo el progreso actual. ¿Continuar?");
-        Optional<ButtonType> result = confirmation.showAndWait();
-        if (result.isPresent() && result.get() == ButtonType.OK) {
-            this.board.initializeBoard(); // Genera nuevo puzzle
-            this.updateGridUI();          // Refresca la UI con el nuevo puzzle
-            this.sudokuGridPane.setDisable(false); // Asegura que la grilla esté activa
-            System.out.println("Nuevo juego iniciado.");
+        if (this.view != null) {
+            initializeGameAndRender();
         }
     }
 
     /**
-     * Limpia todas las celdas editables del tablero actual,
-     * manteniendo los números fijos del puzzle original.
-     * Muestra una confirmación previa.
-     * Asociado al botón "cleanButton".
+     * Establece la referencia a la vista asociada a este controlador.
+     * @param view La instancia de GameView.
+     */
+    public void setView(GameView view) {
+        this.view = view;
+        if (this.board != null && this.gameState != null) {
+            initializeGameAndRender();
+        }
+    }
+
+    /**
+     * Inicializa el tablero con un puzzle y le pide a la vista que lo renderice.
+     */
+    private void initializeGameAndRender() {
+        this.board.initializeBoard(); // Prepara el modelo
+        if (this.view != null) {
+            this.view.renderBoard(this.board.getGridSnapshot()); // Pide renderizar
+            this.view.highlightErrors(this.gameState.getInvalidCells()); // Pide validar visualmente
+            this.view.setGridDisabled(false); // Asegura que la grilla esté activa
+        } else {
+            System.err.println("Error: Intento de renderizar sin vista establecida.");
+        }
+    }
+
+    /**
+     * Proporciona la referencia al GridPane a la Vista (llamado desde GameView).
+     * @return El GridPane del tablero inyectado por FXML.
+     */
+    public GridPane getSudokuGridPane() {
+        return this.sudokuGridPane;
+    }
+
+    /**
+     * Inicia un puzzle completamente nuevo.
+     */
+    private void startNewGame() {
+        if (view == null) return; // No hacer nada si la vista no está lista
+
+        Optional<ButtonType> result = view.showDialog(Alert.AlertType.CONFIRMATION,
+                "Confirmar Reinicio", "Nuevo Juego",
+                "Esto generará un tablero de Sudoku completamente nuevo, perdiendo el progreso actual. ¿Continuar?");
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            System.out.println("Nuevo juego iniciado.");
+            initializeGameAndRender(); // Re-inicializa modelo y pide renderizado/validación a la vista
+        }
+    }
+
+    /**
+     * Limpia las entradas del usuario en el tablero actual.
      */
     private void clearUserEntries() {
-        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION, "¿Seguro que deseas borrar todos los números que has ingresado en este tablero?");
-        Optional<ButtonType> result = confirmation.showAndWait();
+        if (view == null) return;
+
+        Optional<ButtonType> result = view.showDialog(Alert.AlertType.CONFIRMATION,
+                "Confirmar Limpieza", "Limpiar Entradas",
+                "¿Seguro que deseas borrar todos los números que has ingresado en este tablero?");
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
             System.out.println("Limpiando entradas del usuario...");
             boolean changed = false;
-            for (int row = 0; row < GRID_SIZE; row++) {
-                for (int col = 0; col < GRID_SIZE; col++) {
+            for (int row = 0; row < Board.GRID_SIZE; row++) {
+                for (int col = 0; col < Board.GRID_SIZE; col++) {
+                    // Actualizar el Modelo directamente
                     Cell cell = this.board.getCell(row, col);
-                    // Solo limpiar celdas editables que no estén ya vacías
                     if (cell.getEditable() && cell.getValue() != 0) {
-                        // Usar setCellValue es seguro, aunque cell.setValue(0) también funcionaría
-                        // ya que Cell internamente respeta la editabilidad.
-                        this.board.setCellValue(row, col, 0);
+                        this.board.setCellValue(row, col, 0); // Actualiza el modelo
                         changed = true;
                     }
                 }
             }
 
-            // Si se realizó algún cambio, actualizar la UI y validar
             if (changed) {
-                this.updateGridUI(); // Actualiza la vista para reflejar los cambios
-                // validateAndHighlightBoard(); // Quitar resaltado de errores (ya no aplican)
+                // Pedir a la Vista que refleje los cambios del modelo y revalide
+                this.view.renderBoard(this.board.getGridSnapshot());
+                this.view.highlightErrors(this.gameState.getInvalidCells());
             }
-            this.sudokuGridPane.setDisable(false); // Re-habilitar la grilla si estaba deshabilitada (p.ej., por victoria)
+            this.view.setGridDisabled(false); // Asegurar que la grilla esté activa
             System.out.println("Entradas del usuario limpiadas.");
         }
     }
 
     /**
-     * Actualiza la interfaz gráfica (GridPane) basándose en el estado actual del Board.
-     * Limpia la cuadrícula y la rellena con Labels (fijos) o Panes/TextFields (editables).
-     * Aplica estilos de borde inline para simular la cuadrícula.
+     * Muestra la ayuda del juego usando un diálogo en la vista.
      */
-    private void updateGridUI() {
-        // Limpiar celdas anteriores
-        this.sudokuGridPane.getChildren().clear();
-        // Resetear referencias y estado de errores
-        this.currentEditingTextField = null;
-        this.nodeGrid = new Node[GRID_SIZE][GRID_SIZE];
-        this.currentErrors.clear();
-
-        for (int row = 0; row < GRID_SIZE; row++) {
-            for (int col = 0; col < GRID_SIZE; col++) {
-                Cell cell = this.board.getCell(row, col);
-                Node cellNode;
-
-                if (!cell.getEditable()) {
-                    // --- Celda Fija (Label) ---
-                    Label label = new Label(String.valueOf(cell.getValue()));
-                    label.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE); // Para que ocupe la celda
-                    // Aplicar estilo base (fuente) y bordes
-                    applyBaseCellStyle(label, row, col);
-                    label.setStyle(label.getStyle() + STYLE_FONT_BOLD); // Añadir negrita
-                    cellNode = label;
-                } else {
-                    // --- Celda Editable ---
-                    if (cell.getValue() != 0) {
-                        // Celda editable con valor preexistente (TextField)
-                        TextField existingTf = createTextField(cell, row, col);
-                        existingTf.setText(String.valueOf(cell.getValue()));
-                        cellNode = existingTf; // Estilos aplicados en createTextField
-                    } else {
-                        // Celda editable vacía (Pane placeholder)
-                        Pane placeholder = new Pane();
-                        placeholder.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-                        // Aplicar solo estilo de borde (sin fuente)
-                        applyBaseCellStyle(placeholder, row, col);
-                        placeholder.setUserData(new int[]{row, col}); // Guardar coordenadas
-                        cellNode = placeholder;
-                    }
-                }
-
-                // Añadir el nodo (Label, TextField o Pane) al GridPane
-                GridPane.setRowIndex(cellNode, row);
-                GridPane.setColumnIndex(cellNode, col);
-
-                // El alineamiento se maneja en la creación del nodo
-                this.sudokuGridPane.getChildren().add(cellNode);
-
-                // --- Guardar en cache de nodos ---
-                this.nodeGrid[row][col] = cellNode;
-            }
-        }
-        // Aplicar validación inicial (resaltado de errores si aplica)
-        this.validateAndHighlightBoard();
-    }
-
-    /**
-     * Aplica los estilos base (fuente, alineación, borde) a un nodo de celda.
-     * Construye el string de estilo inline para los bordes (normales y de bloque).
-     * @param node El nodo (Label, TextField, Pane) al que aplicar el estilo.
-     * @param row La fila de la celda.
-     * @param col La columna de la celda.
-     */
-    private void applyBaseCellStyle(Node node, int row, int col) {
-        StringBuilder style = new StringBuilder();
-
-        // --- Estilos Comunes ---
-        if (node instanceof Labeled) { // Para Label y TextField (que hereda de Labeled)
-            ((Labeled) node).setAlignment(Pos.CENTER);
-            style.append(STYLE_FONT_SIZE);
-        } else if (node instanceof Pane) {
-            // Los Panes no tienen texto, pero sí necesitan fondo transparente y tamaño preferido
-            // para que el borde sea visible si la celda está vacía.
-            node.setStyle("-fx-background-color: transparent;"); // Asegurar transparencia
-            // Podríamos darles un tamaño mínimo/preferido para que el borde se vea
-            ((Pane) node).setPrefSize(40, 40); // Ajustar si es necesario
-        }
-
-        // --- Lógica de Bordes ---
-        String topBorder = BORDER_WIDTH_NORMAL;
-        String rightBorder = (col + 1) % BLOCK_COLS == 0 ? BORDER_WIDTH_BLOCK : BORDER_WIDTH_NORMAL;
-        String bottomBorder = (row + 1) % BLOCK_ROWS == 0 ? BORDER_WIDTH_BLOCK : BORDER_WIDTH_NORMAL;
-        String leftBorder = BORDER_WIDTH_NORMAL;
-
-        String topColor = BORDER_COLOR_NORMAL;
-        String rightColor = (col + 1) % BLOCK_COLS == 0 ? BORDER_COLOR_BLOCK : BORDER_COLOR_NORMAL;
-        String bottomColor = (row + 1) % BLOCK_ROWS == 0 ? BORDER_COLOR_BLOCK : BORDER_COLOR_NORMAL;
-        String leftColor = BORDER_COLOR_NORMAL;
-
-        // Ancho de bordes (arriba, derecha, abajo, izquierda)
-        style.append("-fx-border-width: ")
-                .append(topBorder).append(" ")
-                .append(rightBorder).append(" ")
-                .append(bottomBorder).append(" ")
-                .append(leftBorder).append("; ");
-
-        // Color de bordes
-        style.append("-fx-border-color: ")
-                .append(topColor).append(" ")
-                .append(rightColor).append(" ")
-                .append(bottomColor).append(" ")
-                .append(leftColor).append("; ");
-
-        // Estilo de borde sólido
-        style.append(BORDER_STYLE_SOLID);
-
-        // Aplicar el estilo construido (añadir al estilo existente si lo hubiera)
-        String existingStyle = node.getStyle() != null ? node.getStyle() : "";
-        if (!existingStyle.endsWith("; ") && !existingStyle.isEmpty()) existingStyle += "; ";
-        node.setStyle(existingStyle + style.toString());
-    }
-
-    /**
-     * Aplica el estilo de resaltado de error a un nodo.
-     * Combina los estilos base (fuente, alineación) con un borde rojo grueso.
-     * @param node El nodo a resaltar.
-     */
-    private void applyErrorStyle(Node node) {
-        StringBuilder style = new StringBuilder();
-        String baseStyle = ""; // Para mantener fuente/alineación
-
-        if (node instanceof Label) {
-            baseStyle = STYLE_FONT_SIZE + STYLE_FONT_BOLD + STYLE_ALIGNMENT_CENTER;
-        } else if (node instanceof TextField) {
-            baseStyle = STYLE_FONT_SIZE + STYLE_ALIGNMENT_CENTER;
-        } else if (node instanceof Pane) {
-            baseStyle = "-fx-background-color: transparent;"; // Mantener transparencia
-            ((Pane) node).setPrefSize(40, 40); // Asegurar tamaño
-        }
-
-        // Añadir borde de error
-        style.append(baseStyle)
-                .append("-fx-border-color: ").append(BORDER_COLOR_ERROR).append("; ")
-                .append("-fx-border-width: ").append(BORDER_WIDTH_BLOCK).append("; ") // Usar borde grueso para error
-                .append(BORDER_STYLE_SOLID);
-
-        node.setStyle(style.toString());
-    }
-
-
-    /**
-     * Maneja los eventos de clic en el GridPane. (Versión Refactorizada con UserData)
-     * Determina la celda clickeada usando UserData o índices del GridPane.
-     * Si es una celda editable vacía (representada por un Pane),
-     * reemplaza el Pane por un TextField editable.
-     * Si es un TextField existente, le da el foco.
-     * @param event El evento del mouse.
-     */
-    private void handleGridClick(MouseEvent event) {
-        Node clickedNode = event.getPickResult().getIntersectedNode();
-        int row = -1, col = -1; // Inicializar con valores inválidos
-
-        // --- ESTRATEGIA PARA OBTENER FILA/COLUMNA ---
-        Object userData = clickedNode.getUserData();
-        if (userData instanceof int[] coords && coords.length == 2) {
-            row = coords[0]; col = coords[1];
-        } else {
-            Integer colIndex = GridPane.getColumnIndex(clickedNode);
-            Integer rowIndex = GridPane.getRowIndex(clickedNode);
-            if (colIndex != null && rowIndex != null) {
-                row = rowIndex; col = colIndex;
-            } else {
-                Parent parent = clickedNode.getParent();
-                if (parent != null) {
-                    colIndex = GridPane.getColumnIndex(parent);
-                    rowIndex = GridPane.getRowIndex(parent);
-                    if (colIndex != null && rowIndex != null) {
-                        row = rowIndex; col = colIndex;
-                        clickedNode = parent; // Referir al nodo padre (el que está en el grid)
-                    } else {
-                        System.err.println("Error Crítico: No se pudo determinar la celda clickeada (padre sin índices). Click ignorado."); return;
-                    }
-                } else {
-                    System.err.println("Error Crítico: No se pudo determinar la celda clickeada (sin índices y sin padre). Click ignorado."); return;
-                }
-            }
-        }
-
-        if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) {
-            System.err.println("Error: Indices de fila/columna (" + row + "," + col + ") inválidos. Click ignorado."); return;
-        }
-
-        // --- Lógica Principal del Clic ---
-        Cell cell = board.getCell(row, col);
-        boolean isClickOnCurrentEditingField = (currentEditingTextField != null && clickedNode == currentEditingTextField);
-
-        if (cell.getEditable() && clickedNode instanceof Pane) { // Clic en placeholder
-            if (currentEditingTextField != null) { // Forzar foco fuera del campo anterior
-                Node focusTarget = sudokuGridPane; // Mover foco al GridPane
-                if(focusTarget != null) focusTarget.requestFocus();
-            }
-            sudokuGridPane.getChildren().remove(clickedNode);
-            nodeGrid[row][col] = null;
-            TextField textField = createTextField(cell, row, col);
-            GridPane.setRowIndex(textField, row); GridPane.setColumnIndex(textField, col);
-            sudokuGridPane.getChildren().add(textField);
-            nodeGrid[row][col] = textField;
-            textField.requestFocus();
-            currentEditingTextField = textField;
-        } else if (clickedNode instanceof TextField) { // Clic en TextField existente
-            if (!isClickOnCurrentEditingField) {
-                if (currentEditingTextField != null) { // Forzar foco fuera del campo anterior
-                    Node focusTarget = sudokuGridPane;
-                    if(focusTarget != null) focusTarget.requestFocus();
-                }
-                clickedNode.requestFocus();
-                currentEditingTextField = (TextField) clickedNode;
-            }
-        } else { // Clic en Label fijo u otro nodo
-            if (currentEditingTextField != null) { // Forzar foco fuera del campo anterior
-                Node focusTarget = sudokuGridPane;
-                if(focusTarget != null) focusTarget.requestFocus();
-            }
-            currentEditingTextField = null;
-        }
-    }
-
-
-    /**
-     * Crea y configura un TextField para una celda editable específica.
-     * Aplica estilos inline base y configura listeners.
-     * @param cell La celda del modelo asociada.
-     * @param row  La fila de la celda.
-     * @param col  La columna de la celda.
-     * @return El TextField configurado.
-     */
-    private TextField createTextField(Cell cell, int row, int col) {
-        TextField textField = new TextField();
-        // Aplicar estilos base (bordes, fuente, alineación)
-        applyBaseCellStyle(textField, row, col);
-        // Ajustar tamaño (puede necesitar !important o ser ajustado en applyBaseCellStyle si hay conflicto)
-        textField.setPrefSize(40, 40); // Tamaño preferido
-        textField.setMaxSize(40, 40); // Limitar tamaño máximo
-
-        textField.setUserData(new int[]{row, col}); // Guardar coordenadas
-
-        // Configurar TextFormatter (sin cambios)
-        Pattern validEditingState = Pattern.compile("^[1-6]?$");
-        UnaryOperator<TextFormatter.Change> filter = change -> {
-            String text = change.getControlNewText();
-            return validEditingState.matcher(text).matches() ? change : null;
-        };
-        TextFormatter<String> textFormatter = new TextFormatter<>(filter);
-        textField.setTextFormatter(textFormatter);
-
-        // Mostrar valor actual (sin cambios)
-        if (cell.getValue() != 0) {
-            textField.setText(String.valueOf(cell.getValue()));
-        }
-
-        // Listener de texto (actualiza modelo y valida)
-        textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            try {
-                int val = newValue.isEmpty() ? 0 : Integer.parseInt(newValue);
-                if (cell.getValue() != val) {
-                    this.board.setCellValue(row, col, val);
-                    this.validateAndHighlightBoard(); // Validar después de cada cambio
-                    this.checkWinCondition();         // Comprobar victoria
-                }
-            } catch (NumberFormatException e) {
-                if (cell.getValue() != 0) {
-                    this.board.setCellValue(row, col, 0);
-                    this.validateAndHighlightBoard();
-                }
-            }
-        });
-
-        // Listener de teclas (sin cambios)
-        textField.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
-            if (event.getCode() == KeyCode.DELETE || event.getCode() == KeyCode.BACK_SPACE) {
-                // La lógica de vaciado está cubierta por el listener de textProperty
-            }
-        });
-
-        // Listener de foco (reemplaza por placeholder si está vacío)
-        textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
-            if (!isNowFocused) { // Perdió el foco
-                if (textField.getText().isEmpty()) {
-                    this.replaceTextFieldWithPlaceholder(textField, row, col);
-                } else {
-                    // Si tiene contenido, validar por si acaso (aunque textProperty ya lo hizo)
-                    this.validateAndHighlightBoard();
-                }
-                if (currentEditingTextField == textField) {
-                    currentEditingTextField = null; // Ya no es el activo
-                }
-            }
-        });
-
-        return textField;
-    }
-
-    /**
-     * Reemplaza un TextField vacío que ha perdido el foco por un Pane placeholder.
-     * @param textField El TextField a reemplazar.
-     * @param row La fila.
-     * @param col La columna.
-     */
-    private void replaceTextFieldWithPlaceholder(TextField textField, int row, int col) {
-        // Solo reemplazar si realmente está en la cuadrícula y vacío
-        if (textField.getText().isEmpty() && nodeGrid[row][col] == textField) {
-            this.sudokuGridPane.getChildren().remove(textField);
-            Pane placeholder = new Pane();
-            // Aplicar estilos base (bordes)
-            applyBaseCellStyle(placeholder, row, col);
-            placeholder.setUserData(new int[]{row, col}); // Guardar coordenadas
-
-            GridPane.setRowIndex(placeholder, row); GridPane.setColumnIndex(placeholder, col);
-            this.sudokuGridPane.getChildren().add(placeholder);
-            nodeGrid[row][col] = placeholder; // Actualizar cache
-
-            // Asegurarse de que el modelo también esté vacío
-            if (board.getCell(row, col).getValue() != 0) {
-                board.setCellValue(row, col, 0);
-                // No es necesario validar aquí, ya se hizo al vaciar el TextField
-            }
-        }
-    }
-
-    /**
-     * Valida el tablero y actualiza la UI para resaltar errores de forma inteligente.
-     * Usa la caché de nodos y compara errores actuales con previos.
-     * Aplica/Restaura estilos inline.
-     */
-    private void validateAndHighlightBoard() {
-        Set<Pair<Integer, Integer>> newErrors = gameState.getInvalidCells();
-
-        // --- Gestión de Estilos Inteligente ---
-        // Quitar resaltado de errores que ya no existen
-        Set<Pair<Integer, Integer>> errorsToRemove = new HashSet<>(currentErrors);
-        errorsToRemove.removeAll(newErrors); // Celdas que estaban en error pero ya no
-        for (Pair<Integer, Integer> coord : errorsToRemove) {
-            Node node = nodeGrid[coord.getKey()][coord.getValue()];
-            if (node != null) {
-                // Reaplicar estilo base para quitar el borde rojo
-                applyBaseCellStyle(node, coord.getKey(), coord.getValue());
-                // Reaplicar negrita si era un Label fijo
-                if(node instanceof Label && !board.getCell(coord.getKey(), coord.getValue()).getEditable()){
-                    node.setStyle(node.getStyle() + STYLE_FONT_BOLD);
-                }
-            }
-        }
-
-        // Añadir resaltado a nuevos errores
-        Set<Pair<Integer, Integer>> errorsToAdd = new HashSet<>(newErrors);
-        errorsToAdd.removeAll(currentErrors); // Celdas que no estaban en error y ahora sí
-        for (Pair<Integer, Integer> coord : errorsToAdd) {
-            Node node = nodeGrid[coord.getKey()][coord.getValue()];
-            if (node != null) {
-                // Aplicar estilo de error (que incluye borde rojo y estilos base)
-                applyErrorStyle(node);
-            } else {
-                System.err.println("Error: No se encontró nodo en la cache para resaltar: " + coord.getKey() + "," + coord.getValue());
-            }
-        }
-
-        // Actualizar el conjunto de errores actual
-        currentErrors = newErrors;
-
-        // Opcional: Log de depuración
-        // if (!newErrors.isEmpty()) {
-        //     System.out.println("Errores actuales: " + newErrors);
-        // }
-    }
-
-    /**
-     * Comprueba si el juego ha sido ganado y muestra un mensaje.
-     */
-    private void checkWinCondition() {
-        if (gameState.isGameWon()) {
-            Alert winAlert = new Alert(Alert.AlertType.INFORMATION);
-            winAlert.setTitle("¡Felicidades!");
-            winAlert.setHeaderText("¡Sudoku Resuelto!");
-            winAlert.setContentText("¡Has completado el Sudoku exitosamente!");
-            winAlert.showAndWait();
-            sudokuGridPane.setDisable(true); // Deshabilitar más interacción
-        }
-    }
-
     private void showHelp() {
+        if (view == null) return;
         System.out.println("Mostrando Ayuda...");
-        Alert helpAlert = new Alert(Alert.AlertType.INFORMATION);
-        helpAlert.setTitle("Ayuda Sudoku 6x6");
-        helpAlert.setHeaderText("Reglas del Juego");
-        helpAlert.setContentText("""
-                Completa la cuadrícula de 6x6 con números del 1 al 6.
-                - Cada fila debe contener todos los números del 1 al 6 sin repetición.
-                - Cada columna debe contener todos los números del 1 al 6 sin repetición.
-                - Cada bloque de 2x3 debe contener todos los números del 1 al 6 sin repetición.
-                Haz clic en una celda vacía para ingresar un número. Las celdas con números en negrita son fijas.
-                Usa las teclas DELETE o BACKSPACE para borrar un número ingresado.
+        view.showDialog(Alert.AlertType.INFORMATION, "Ayuda Sudoku 6x6", "Reglas del Juego",
+                // Contenido del mensaje (sin cambios)
+                """
+               Completa la cuadrícula de 6x6 con números del 1 al 6.
+               - Cada fila debe contener todos los números del 1 al 6 sin repetición.
+               - Cada columna debe contener todos los números del 1 al 6 sin repetición.
+               - Cada bloque de 2x3 debe contener todos los números del 1 al 6 sin repetición.
+               Haz clic en una celda vacía para ingresar un número. Las celdas con números en negrita son fijas.
+               Usa las teclas DELETE o BACKSPACE para borrar un número ingresado.
 
-                Botones:
-                - Reiniciar: Inicia un puzzle de Sudoku completamente nuevo.
-                - Limpiar: Borra todos los números ingresados por el usuario en el puzzle actual.
-                - Ayuda: Muestra esta ventana.
-                - ?: Muestra una pista (si es posible).
-                """);
-        helpAlert.showAndWait();
+               Botones:
+               - Reiniciar: Inicia un puzzle de Sudoku completamente nuevo.
+               - Limpiar: Borra todos los números ingresados por el usuario en el puzzle actual.
+               - Ayuda: Muestra esta ventana.
+               - ?: Muestra una pista (si es posible).
+               """
+        );
     }
 
+    /**
+     * Busca y aplica una pista en el tablero.
+     */
     private void showClue() {
+        if (view == null) return;
         System.out.println("Pista - Buscando sugerencia...");
-        // --- Lógica básica para pista (requiere prueba y refinamiento) ---
-        for (int r = 0; r < GRID_SIZE; r++) {
-            for (int c = 0; c < GRID_SIZE; c++) {
+        boolean clueFound = false;
+        for (int r = 0; r < Board.GRID_SIZE; r++) {
+            for (int c = 0; c < Board.GRID_SIZE; c++) {
                 Cell cell = board.getCell(r, c);
-                if (cell.getEditable() && cell.getValue() == 0) { // Buscar celda vacía y editable
+                // Buscar primera celda editable vacía para la que haya sugerencia
+                if (cell.getEditable() && cell.getValue() == 0) {
                     int suggestion = gameState.getSuggestion(r, c);
                     if (suggestion > 0) {
-                        // Encontró una pista válida
-                        Node node = nodeGrid[r][c];
-                        TextField tfToShowClue;
-
-                        if (node instanceof Pane) { // Si es placeholder, reemplazarlo por TextField
-                            sudokuGridPane.getChildren().remove(node);
-                            tfToShowClue = createTextField(cell, r, c);
-                            GridPane.setRowIndex(tfToShowClue, r); GridPane.setColumnIndex(tfToShowClue, c);
-                            sudokuGridPane.getChildren().add(tfToShowClue);
-                            nodeGrid[r][c] = tfToShowClue;
-                        } else if (node instanceof TextField) { // Si ya es TextField (poco probable si está vacío)
-                            tfToShowClue = (TextField) node;
-                        } else {
-                            System.err.println("Error Pista: Nodo inesperado en celda vacía editable: " + node);
-                            continue; // Buscar otra celda
-                        }
-
-                        // Poner la sugerencia y opcionalmente resaltarla/enfocarla
-                        tfToShowClue.setText(String.valueOf(suggestion));
-                        // El listener de textProperty actualizará el modelo y validará.
-                        tfToShowClue.requestFocus(); // Darle foco
                         System.out.println("Pista: Poner " + suggestion + " en (" + r + "," + c + ")");
-                        // Podrías añadir un estilo temporal para la pista aquí
-                        // Platform.runLater(() -> { ... estilo temporal ... });
-                        return; // Salir después de dar una pista
+                        // Actualizar el Modelo
+                        this.board.setCellValue(r, c, suggestion);
+                        // Pedir a la Vista que renderice y valide
+                        this.view.renderBoard(this.board.getGridSnapshot());
+                        this.view.highlightErrors(this.gameState.getInvalidCells());
+                        // TODO: Idealmente, pedir a la vista que enfoque la celda: view.focusCell(r, c);
+                        clueFound = true;
+                        break; // Salir del bucle interno
                     }
                 }
             }
+            if (clueFound) break; // Salir del bucle externo
         }
-        // Si el bucle termina, no se encontraron pistas
-        Alert noClue = new Alert(Alert.AlertType.INFORMATION, "No hay pistas obvias disponibles o el tablero está lleno/inválido.");
-        noClue.showAndWait();
+
+        if (!clueFound) {
+            view.showDialog(Alert.AlertType.INFORMATION, "Pista", null,
+                    "No hay pistas obvias disponibles o el tablero está lleno/inválido.");
+        }
+    }
+
+    // --- Métodos llamados por la Vista para notificar eventos ---
+
+    /**
+     * Llamado por GameView cuando el usuario hace clic en una celda.
+     * @param row Fila de la celda.
+     * @param col Columna de la celda.
+     */
+    public void cellClicked(int row, int col) {
+        // En esta versión, la vista maneja la creación/foco del TextField.
+        // El controlador podría usar esto para otra lógica si fuera necesario.
+        // System.out.println("Controller notificado: Clic en (" + row + "," + col + ")");
+    }
+
+    /**
+     * Llamado por GameView cuando el texto de un TextField cambia.
+     * Actualiza el modelo y desencadena la validación y posible condición de victoria.
+     * @param row Fila del cambio.
+     * @param col Columna del cambio.
+     * @param newValue El nuevo valor como String (puede ser vacío).
+     */
+    public void cellValueChanged(int row, int col, String newValue) {
+        if (view == null) return; // Seguridad
+
+        try {
+            int value = newValue.isEmpty() ? 0 : Integer.parseInt(newValue);
+            Cell cell = board.getCell(row, col); // Obtener celda del modelo
+
+            // Solo procesar si es editable y el valor realmente cambió
+            if (cell.getEditable() && cell.getValue() != value) {
+                // 1. Actualizar el Modelo
+                boolean updated = board.setCellValue(row, col, value);
+
+                if (updated) {
+                    // 2. Validar estado y pedir a la Vista que actualice resaltados
+                    validateAndHighlightBoard();
+                    // 3. Comprobar si se ha ganado el juego
+                    checkWinCondition();
+                }
+            }
+        } catch (NumberFormatException e) {
+            // Esto no debería ocurrir debido al TextFormatter de la vista, pero por robustez:
+            System.err.println("Error de formato numérico inesperado: " + newValue);
+            // Podríamos limpiar la celda en el modelo si previamente tenía un valor válido
+            Cell cell = board.getCell(row, col);
+            if(cell.getEditable() && cell.getValue() != 0) {
+                board.setCellValue(row, col, 0);
+                validateAndHighlightBoard(); // Revalidar
+            }
+        } catch (IllegalArgumentException e) {
+            // Captura valores fuera de rango (0-6) si setCellValue los lanza
+            System.err.println("Intento de valor ilegal en ("+row+","+col+"): " + newValue + " - " + e.getMessage());
+            // Podríamos forzar a la vista a refrescarse para revertir el cambio visual si es necesario
+            // view.renderBoard(board.getGridSnapshot());
+        }
+    }
+
+    // --- Lógica Interna del Controlador ---
+
+    /**
+     * Consulta el estado de validez del tablero y le pide a la vista que actualice
+     * el resaltado de las celdas erróneas.
+     */
+    private void validateAndHighlightBoard() {
+        if (view == null) return;
+        Set<Pair<Integer, Integer>> invalidCells = gameState.getInvalidCells();
+        view.highlightErrors(invalidCells); // Ordena a la vista resaltar
+    }
+
+    /**
+     * Comprueba si el juego ha sido ganado y, si es así, notifica al usuario
+     * a través de la vista y deshabilita la interacción con el tablero.
+     */
+    private void checkWinCondition() {
+        if (view == null) return;
+        if (gameState.isGameWon()) {
+            System.out.println("¡Juego ganado!");
+            view.showDialog(Alert.AlertType.INFORMATION, "¡Felicidades!", "¡Sudoku Resuelto!",
+                    "¡Has completado el Sudoku exitosamente!");
+            view.setGridDisabled(true); // Ordena a la vista deshabilitar la grilla
+        }
+    }
+
+    /**
+     * Permite a la vista consultar si una celda es editable (necesario para restoreBaseStyle).
+     * @param row Fila.
+     * @param col Columna.
+     * @return true si la celda en el modelo es editable, false en caso contrario.
+     */
+    public boolean isCellEditable(int row, int col) {
+        if (board != null && row >= 0 && row < Board.GRID_SIZE && col >= 0 && col < Board.GRID_SIZE) {
+            return board.getCell(row, col).getEditable();
+        }
+        return false; // Valor por defecto o lanzar excepción si se prefiere
     }
 }
