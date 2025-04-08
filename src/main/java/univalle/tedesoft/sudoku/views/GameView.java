@@ -47,6 +47,7 @@ public class GameView extends Stage {
     private static final String BORDER_WIDTH_NORMAL = "0.5px";
     private static final String BORDER_WIDTH_BLOCK = "2px";
     private static final String BORDER_STYLE_SOLID = "-fx-border-style: solid;";
+    private static final String HIGHLIGHT_BACKGROUND_COLOR = "lightblue";
 
     // Referencias
     private final GridPane sudokuGridPane;
@@ -56,6 +57,7 @@ public class GameView extends Stage {
     private Node[][] nodeGrid = new Node[GRID_SIZE][GRID_SIZE]; // Cache de nodos UI para acceso rápido
     private TextField currentEditingTextField = null; // Campo de texto activo actualmente
     private Set<Pair<Integer, Integer>> currentErrorCoords = new HashSet<>(); // Coords con error resaltado
+    private Set<Pair<Integer, Integer>> currentlyHighlightedCoords = new HashSet<>(); // resaltar celdas por hover
 
     /**
      * Constructor privado Singleton. Carga el archivo FXML.
@@ -100,6 +102,8 @@ public class GameView extends Stage {
         nodeGrid = new Node[GRID_SIZE][GRID_SIZE];
         // Evitar que haya campos activos al re-renderizar
         currentEditingTextField = null;
+        // Limpiar resaltados de hover anteriores
+        currentlyHighlightedCoords.clear();
 
         for (int row = 0; row < GRID_SIZE; row++) {
             for (int col = 0; col < GRID_SIZE; col++) {
@@ -110,20 +114,20 @@ public class GameView extends Stage {
                     // Celda Fija: Crear un Label
                     Label label = new Label(String.valueOf(cellData.getValue()));
                     label.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-                    applyBaseCellStyle(label, row, col); // Estilo base (bordes, fuente normal)
-                    label.setStyle(label.getStyle() + STYLE_FONT_BOLD); // Añadir negrita
+                    // Añadir manejadores de hover
+                    label.setOnMouseEntered(this::handleMouseEntered);
+                    label.setOnMouseExited(this::handleMouseExited);
                     cellNode = label;
                 } else {
                     // Celda Editable
                     if (cellData.getValue() != 0) {
                         // Con valor inicial: Crear TextField prellenado
-                        TextField tf = createTextField(row, col); // Pasa coords para listeners
+                        TextField tf = this.createTextField(row, col);
                         tf.setText(String.valueOf(cellData.getValue()));
                         cellNode = tf;
                     } else {
                         // Vacía: Crear un Pane placeholder cliqueable
-                        Pane placeholder = createPlaceholderPane(row, col);
-                        cellNode = placeholder;
+                        cellNode = this.createPlaceholderPane(row, col);;
                     }
                 }
 
@@ -136,39 +140,39 @@ public class GameView extends Stage {
                 nodeGrid[row][col] = cellNode;
             }
         }
-        // Después de renderizar, aplicar el resaltado de errores actual (si lo hay)
-        highlightErrors(this.currentErrorCoords);
+
+        // Aplicar el estilo inicial a todas las celdas DESPUÉS de que estén todas en la caché nodeGrid
+        for (int r = 0; r < GRID_SIZE; r++) {
+            for (int c = 0; c < GRID_SIZE; c++) {
+                updateCellStyle(r, c);
+            }
+        }
+
+        // Reaplicar el estado de errores visualmente usando la nueva lógica
+        // highlightErrors ahora solo necesita las nuevas coordenadas de error
+        // y llamará a updateCellStyle internamente.
+        highlightErrors(this.currentErrorCoords); // Llama a la versión adaptada abajo
     }
 
     /**
      * Actualiza los estilos de las celdas para mostrar cuáles tienen errores.
-     * Elimina el resaltado de errores antiguos y aplica el nuevo.
+     * Actualiza el estado del error y llama a updateCellStyle.
      * @param newErrorCoords Conjunto de coordenadas (fila, columna) de las celdas con errores.
+     * @see updateCellStyle
      */
     public void highlightErrors(Set<Pair<Integer, Integer>> newErrorCoords) {
-        // 1. Quitar resaltado de errores que ya NO existen
-        Set<Pair<Integer, Integer>> errorsToRemove = new HashSet<>(this.currentErrorCoords);
-        errorsToRemove.removeAll(newErrorCoords); // Celdas que estaban en error pero ya no
-        for (Pair<Integer, Integer> coord : errorsToRemove) {
-            Node node = nodeGrid[coord.getKey()][coord.getValue()];
-            if (node != null) {
-                restoreBaseStyle(node, coord.getKey(), coord.getValue());
-            }
-        }
-
-        // 2. Añadir resaltado a NUEVOS errores
-        Set<Pair<Integer, Integer>> errorsToAdd = new HashSet<>(newErrorCoords);
-        errorsToAdd.removeAll(this.currentErrorCoords); // Celdas que no estaban en error y ahora sí
-        for (Pair<Integer, Integer> coord : errorsToAdd) {
-            Node node = nodeGrid[coord.getKey()][coord.getValue()];
-            if (node != null) {
-                applyErrorStyle(node); // Aplica el estilo rojo/grueso
-            }
-        }
-        // Las celdas que SIGUEN en error ya tienen el estilo, no se tocan.
-
-        // 3. Actualizar el conjunto de errores actual de la vista
+        Set<Pair<Integer, Integer>> oldErrorCoords = this.currentErrorCoords;
         this.currentErrorCoords = new HashSet<>(newErrorCoords);
+
+        // Determinar qué celdas cambiaron su estado de error
+        Set<Pair<Integer, Integer>> changedCoords = new HashSet<>(oldErrorCoords);
+        // Unión de coordenadas viejas y nuevas
+        changedCoords.addAll(newErrorCoords);
+
+        // Actualizar el estilo de todas las celdas afectadas
+        for (Pair<Integer, Integer> coord : changedCoords) {
+            updateCellStyle(coord.getKey(), coord.getValue());
+        }
     }
 
     /**
@@ -255,36 +259,29 @@ public class GameView extends Stage {
 
     /**
      * Reemplaza un nodo (presumiblemente un Pane) con un TextField editable en la misma celda.
+     * Llama a updateCellStyle para aplicar el estilo correcto.
      * @param nodeToReplace El nodo (Pane) a quitar.
      * @param row La fila.
      * @param col La columna.
      */
     private void switchToTextField(Node nodeToReplace, int row, int col) {
-        // Si se estaba editando otro campo, quitarle el foco primero
         if (currentEditingTextField != null && currentEditingTextField != nodeToReplace) {
             sudokuGridPane.requestFocus();
         }
 
-        // Crear el nuevo TextField
-        TextField textField = createTextField(row, col);
+        TextField textField = this.createTextField(row, col); // Ya tiene handlers de hover
 
-        // Reemplazar el nodo en el GridPane
         sudokuGridPane.getChildren().remove(nodeToReplace);
         GridPane.setRowIndex(textField, row);
         GridPane.setColumnIndex(textField, col);
         sudokuGridPane.getChildren().add(textField);
+        nodeGrid[row][col] = textField; // Actualizar caché
 
-        // Actualizar la caché de nodos de la vista
-        nodeGrid[row][col] = textField;
+        // Aplicar estilo correcto (puede estar resaltado por hover o tener error)
+        updateCellStyle(row, col);
 
-        // Dar foco y marcar como campo en edición
         textField.requestFocus();
-        currentEditingTextField = textField;
-
-        // Aplicar estilo de error si corresponde (la celda estaba vacía, no debería tener error, pero por si acaso)
-        if (currentErrorCoords.contains(new Pair<>(row, col))) {
-            applyErrorStyle(textField);
-        }
+        currentEditingTextField = textField; // Marcar como campo en edición
     }
 
     /**
@@ -294,7 +291,6 @@ public class GameView extends Stage {
      * @param col La columna.
      */
     private void replaceTextFieldWithPlaceholder(TextField textField, int row, int col) {
-        // Asegurarse de que el nodo correcto está siendo reemplazado
         if (nodeGrid[row][col] == textField) {
             sudokuGridPane.getChildren().remove(textField);
             Pane placeholder = createPlaceholderPane(row, col);
@@ -303,10 +299,9 @@ public class GameView extends Stage {
             sudokuGridPane.getChildren().add(placeholder);
             nodeGrid[row][col] = placeholder; // Actualizar caché
 
-            // Restaurar estilo base (si tenía error, quitarlo)
-            restoreBaseStyle(placeholder, row, col);
+            // Restaurar estilo base (o de error si lo tenía)
+            updateCellStyle(row, col);
         }
-        // Si este era el campo activo, ya no lo es
         if(currentEditingTextField == textField) {
             currentEditingTextField = null;
         }
@@ -321,37 +316,31 @@ public class GameView extends Stage {
      */
     private TextField createTextField(int row, int col) {
         TextField textField = new TextField();
-        applyBaseCellStyle(textField, row, col); // Estilo base inicial
         textField.setPrefSize(40, 40);
         textField.setMaxSize(40, 40);
-        textField.setUserData(new int[]{row, col}); // Guardar coords para identificación
+        textField.setUserData(new int[]{row, col});
 
-        // Filtro para aceptar solo números del 1 al 6 o vacío
+        // Filtro y listeners existentes
         Pattern validEditingState = Pattern.compile("^[1-6]?$");
         UnaryOperator<TextFormatter.Change> filter = change ->
                 validEditingState.matcher(change.getControlNewText()).matches() ? change : null;
         textField.setTextFormatter(new TextFormatter<>(filter));
-
-        // Listener: Cambio de Texto -> INFORMAR AL CONTROLADOR
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            controller.cellValueChanged(row, col, newValue); // Delegar al controlador
-            // La vista podría reaccionar visualmente aquí si fuera necesario (ej. cambiar color mientras se escribe)
+            controller.cellValueChanged(row, col, newValue);
         });
-
-        // Listener: Pérdida de Foco -> Reemplazar si está vacío
         textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
             if (!isNowFocused && textField.getText().isEmpty()) {
-                // Perdió foco y está vacío -> Reemplazar por placeholder
                 replaceTextFieldWithPlaceholder(textField, row, col);
-                // No es necesario notificar al controlador de nuevo, cellValueChanged ya lo hizo con ""
             } else if (!isNowFocused && currentEditingTextField == textField) {
-                // Perdió foco pero no está vacío, asegurarse que ya no es el "activo"
                 currentEditingTextField = null;
             } else if (isNowFocused) {
-                // Ganó foco, marcarlo como el activo
                 currentEditingTextField = textField;
             }
         });
+
+        // Añadir handlers de hover
+        textField.setOnMouseEntered(this::handleMouseEntered);
+        textField.setOnMouseExited(this::handleMouseExited);
 
         return textField;
     }
@@ -365,10 +354,13 @@ public class GameView extends Stage {
     private Pane createPlaceholderPane(int row, int col) {
         Pane placeholder = new Pane();
         placeholder.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
-        // Estilo base
-        applyBaseCellStyle(placeholder, row, col);
-        // Coordenadas para identificarlo al hacer clic
+        // NO aplicar estilo base aquí
         placeholder.setUserData(new int[]{row, col});
+
+        // Añadir handlers de hover
+        placeholder.setOnMouseEntered(this::handleMouseEntered);
+        placeholder.setOnMouseExited(this::handleMouseExited);
+
         return placeholder;
     }
 
@@ -415,81 +407,134 @@ public class GameView extends Stage {
         return null;
     }
 
+
     /**
-     * Aplica los estilos base (bordes, fuente, alineación) a un nodo de celda.
-     * Usado para inicializar y para quitar el resaltado de error.
+     * Aplica el estilo completo a una celda basándose en su estado actual
+     * (fija/editable, error, resaltado por hover).
+     * REEMPLAZA a applyBaseCellStyle, applyErrorStyle, restoreBaseStyle.
+     *
+     * @param row Fila de la celda.
+     * @param col Columna de la celda.
      */
-    private void applyBaseCellStyle(Node node, int row, int col) {
-        StringBuilder style = new StringBuilder();
-        // Estilos comunes de fuente/alineación
-        if (node instanceof Labeled) {
-            ((Labeled) node).setAlignment(Pos.CENTER);
-            style.append(STYLE_FONT_SIZE);
-            // Quitamos la negrita por defecto aquí, se añade explícitamente para Labels fijos
-            node.setStyle(node.getStyle().replace(STYLE_FONT_BOLD, "")); // Asegurar que no esté
-        } else if (node instanceof Pane) {
-            node.setStyle("-fx-background-color: transparent;"); // Fondo transparente
-            ((Pane) node).setPrefSize(40, 40); // Tamaño deseado
+    private void updateCellStyle(int row, int col) {
+        // Asegurarse de que el nodo exista en la caché
+        if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE || nodeGrid == null || nodeGrid[row][col] == null) {
+            //System.err.println("Intento de actualizar estilo para celda inválida o nodo nulo en (" + row + "," + col + ")");
+            return; // Salir si el nodo no está listo o los índices son inválidos
         }
+        Node node = nodeGrid[row][col];
 
-        // Calcular bordes normales y de bloque
-        String topBorder = BORDER_WIDTH_NORMAL;
-        String rightBorder = (col + 1) % BLOCK_COLS == 0 ? BORDER_WIDTH_BLOCK : BORDER_WIDTH_NORMAL;
-        String bottomBorder = (row + 1) % BLOCK_ROWS == 0 ? BORDER_WIDTH_BLOCK : BORDER_WIDTH_NORMAL;
-        String leftBorder = BORDER_WIDTH_NORMAL;
-        String topColor = BORDER_COLOR_NORMAL;
-        String rightColor = (col + 1) % BLOCK_COLS == 0 ? BORDER_COLOR_BLOCK : BORDER_COLOR_NORMAL;
-        String bottomColor = (row + 1) % BLOCK_ROWS == 0 ? BORDER_COLOR_BLOCK : BORDER_COLOR_NORMAL;
-        String leftColor = BORDER_COLOR_NORMAL;
+        boolean isFixed = !controller.isCellEditable(row, col);
+        boolean isError = currentErrorCoords.contains(new Pair<>(row, col));
+        boolean isHighlighted = currentlyHighlightedCoords.contains(new Pair<>(row, col));
 
-        // Construir estilos de borde
-        style.append("-fx-border-width: ").append(topBorder).append(" ").append(rightBorder).append(" ").append(bottomBorder).append(" ").append(leftBorder).append("; ");
-        style.append("-fx-border-color: ").append(topColor).append(" ").append(rightColor).append(" ").append(bottomColor).append(" ").append(leftColor).append("; ");
-        style.append(BORDER_STYLE_SOLID);
-
-        // Aplicar el estilo completo
-        node.setStyle(style.toString());
-    }
-
-    /**
-     * Aplica el estilo visual de error a un nodo (borde rojo grueso).
-     * Mantiene la fuente/alineación base si aplica.
-     */
-    private void applyErrorStyle(Node node) {
-        StringBuilder style = new StringBuilder();
-        // Mantener estilos base de fuente/alineación
-        if (node instanceof Label) { // Label fijo (no debería tener error, pero por completitud)
-            style.append(STYLE_FONT_SIZE).append(STYLE_FONT_BOLD).append(STYLE_ALIGNMENT_CENTER);
-        } else if (node instanceof TextField) { // TextField editable
-            style.append(STYLE_FONT_SIZE).append(STYLE_ALIGNMENT_CENTER);
-        } else if (node instanceof Pane) { // Placeholder (editable vacío)
-            style.append("-fx-background-color: transparent;");
-            ((Pane) node).setPrefSize(40, 40);
-        }
-
-        // Añadir borde de error (rojo y grueso)
-        style.append("-fx-border-color: ").append(BORDER_COLOR_ERROR).append("; ")
-                .append("-fx-border-width: ").append(BORDER_WIDTH_BLOCK).append("; ") // Borde grueso para error
-                .append(BORDER_STYLE_SOLID);
-
-        node.setStyle(style.toString());
-    }
-
-    /**
-     * Restaura el estilo base de una celda, asegurándose de quitar el resaltado de error
-     * y de reaplicar la negrita si era un Label fijo.
-     */
-    private void restoreBaseStyle(Node node, int row, int col) {
-        applyBaseCellStyle(node, row, col); // Aplica bordes y fuente/alineación normales
-
-        // Si el nodo es un Label, debemos verificar si era fijo (no editable) para ponerle negrita.
-        if (node instanceof Label) {
-            // Consultar al controlador si la celda original era editable o no
-            boolean isEditable = controller.isCellEditable(row, col);
-            if (!isEditable) {
-                // Era fija, restaurar negrita además del estilo base
-                node.setStyle(node.getStyle() + STYLE_FONT_BOLD);
+        // 1. Base Font/Alignment Styles
+        StringBuilder styleBuilder = new StringBuilder();
+        if (node instanceof Labeled || node instanceof TextField) {
+            styleBuilder.append(STYLE_ALIGNMENT_CENTER); // Centrado
+            styleBuilder.append(STYLE_FONT_SIZE);      // Tamaño de fuente base
+            if (isFixed && node instanceof Labeled) {   // Negrita solo para Labels fijos
+                styleBuilder.append(STYLE_FONT_BOLD);
             }
+        } else if (node instanceof Pane) {
+            // Los Panes no tienen texto, pero podrían necesitar tamaño si no lo gestiona GridPane
+            // ((Pane) node).setPrefSize(40, 40); // Opcional: asegurar tamaño
+        }
+
+        // 2. Border Styles (Determinado por error y posición de bloque)
+        String topBorderWidth, rightBorderWidth, bottomBorderWidth, leftBorderWidth;
+        String topBorderColor, rightBorderColor, bottomBorderColor, leftBorderColor;
+
+        if (isError) {
+            // Estilo de borde de error (rojo y grueso)
+            topBorderWidth = rightBorderWidth = bottomBorderWidth = leftBorderWidth = BORDER_WIDTH_BLOCK;
+            topBorderColor = rightBorderColor = bottomBorderColor = leftBorderColor = BORDER_COLOR_ERROR;
+        } else {
+            // Estilo de borde normal (delgado gris, más grueso negro en límites de bloque)
+            topBorderWidth = BORDER_WIDTH_NORMAL; // Borde superior siempre normal (o BORDER_WIDTH_BLOCK si row == 0?) - dejémoslo normal
+            rightBorderWidth = (col + 1) % BLOCK_COLS == 0 ? BORDER_WIDTH_BLOCK : BORDER_WIDTH_NORMAL;
+            bottomBorderWidth = (row + 1) % BLOCK_ROWS == 0 ? BORDER_WIDTH_BLOCK : BORDER_WIDTH_NORMAL;
+            leftBorderWidth = BORDER_WIDTH_NORMAL; // Borde izquierdo siempre normal (o BORDER_WIDTH_BLOCK si col == 0?) - dejémoslo normal
+
+            topBorderColor = BORDER_COLOR_NORMAL;
+            rightBorderColor = (col + 1) % BLOCK_COLS == 0 ? BORDER_COLOR_BLOCK : BORDER_COLOR_NORMAL;
+            bottomBorderColor = (row + 1) % BLOCK_ROWS == 0 ? BORDER_COLOR_BLOCK : BORDER_COLOR_NORMAL;
+            leftBorderColor = BORDER_COLOR_NORMAL;
+        }
+
+        // Añadir estilos de borde al builder
+        styleBuilder.append(" -fx-border-width: ").append(topBorderWidth).append(" ").append(rightBorderWidth).append(" ").append(bottomBorderWidth).append(" ").append(leftBorderWidth).append(";");
+        styleBuilder.append(" -fx-border-color: ").append(topBorderColor).append(" ").append(rightBorderColor).append(" ").append(bottomBorderColor).append(" ").append(leftBorderColor).append(";");
+        styleBuilder.append(" ").append(BORDER_STYLE_SOLID).append(";"); // Asegurar punto y coma
+
+        // 3. Background Style (Determinado por resaltado de hover)
+        if (isHighlighted) {
+            styleBuilder.append(" -fx-background-color: ").append(HIGHLIGHT_BACKGROUND_COLOR).append(";");
+        } else {
+            // Fondo transparente por defecto si no está resaltado
+            styleBuilder.append(" -fx-background-color: transparent;");
+            // Podrías querer un fondo blanco para TextFields:
+            // if (node instanceof TextField) { styleBuilder.append(" -fx-background-color: white;"); }
+        }
+
+        // Aplicar el estilo final al nodo
+        node.setStyle(styleBuilder.toString().trim());
+    }
+
+    /**
+     * Manejador para cuando el ratón entra en una celda.
+     * Calcula las nuevas celdas a resaltar y actualiza sus estilos.
+     * @param event El evento del ratón.
+     */
+    private void handleMouseEntered(MouseEvent event) {
+        Node sourceNode = (Node) event.getSource();
+        int[] coords = getClickedCellCoords(sourceNode);
+        if (coords == null) return; // No se pudo identificar la celda
+
+        int enterRow = coords[0];
+        int enterCol = coords[1];
+
+        // 1. Recordar qué celdas estaban resaltadas antes
+        Set<Pair<Integer, Integer>> oldHighlights = new HashSet<>(currentlyHighlightedCoords);
+
+        // 2. Limpiar el estado de resaltado actual
+        currentlyHighlightedCoords.clear();
+
+        // 3. Calcular y establecer el nuevo estado de resaltado (fila y columna)
+        // Añadir toda la fila
+        for (int c = 0; c < GRID_SIZE; c++) {
+            currentlyHighlightedCoords.add(new Pair<>(enterRow, c));
+        }
+        // Añadir toda la columna
+        for (int r = 0; r < GRID_SIZE; r++) {
+            currentlyHighlightedCoords.add(new Pair<>(r, enterCol));
+        }
+
+        // 4. Determinar todas las celdas afectadas (las que dejaron de estar resaltadas + las nuevas)
+        Set<Pair<Integer, Integer>> affectedCoords = new HashSet<>(oldHighlights);
+        affectedCoords.addAll(currentlyHighlightedCoords); // Unión de viejas y nuevas
+
+        // 5. Actualizar el estilo de todas las celdas afectadas
+        for (Pair<Integer, Integer> coord : affectedCoords) {
+            updateCellStyle(coord.getKey(), coord.getValue());
+        }
+    }
+
+    /**
+     * Manejador para cuando el ratón sale de una celda.
+     * Limpia el estado de resaltado y actualiza los estilos de las celdas que estaban resaltadas.
+     * @param event El evento del ratón.
+     */
+    private void handleMouseExited(MouseEvent event) {
+        // 1. Recordar qué celdas estaban resaltadas
+        Set<Pair<Integer, Integer>> oldHighlights = new HashSet<>(currentlyHighlightedCoords);
+
+        // 2. Limpiar el estado de resaltado
+        currentlyHighlightedCoords.clear();
+
+        // 3. Actualizar el estilo de las celdas que *estaban* resaltadas para quitarles el fondo
+        for (Pair<Integer, Integer> coord : oldHighlights) {
+            updateCellStyle(coord.getKey(), coord.getValue());
         }
     }
 
