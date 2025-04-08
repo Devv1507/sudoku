@@ -58,9 +58,9 @@ public class Board {
      * Constructor del tablero. Inicializa la cuadrícula de celdas vacías y los bloques.
      */
     public Board() {
-        grid = new Cell[GRID_SIZE][GRID_SIZE];
-        initialGridState = new Cell[GRID_SIZE][GRID_SIZE];
-        blocks = new Block[NUM_BLOCK_ROWS][NUM_BLOCK_COLS];
+        this.grid = new Cell[GRID_SIZE][GRID_SIZE];
+        this.initialGridState = new Cell[GRID_SIZE][GRID_SIZE];
+        this.blocks = new Block[NUM_BLOCK_ROWS][NUM_BLOCK_COLS];
 
         // Inicializar celdas vacías
         for (int i = 0; i < GRID_SIZE; i++) {
@@ -128,10 +128,12 @@ public class Board {
         }
 
         List<Integer> numbers = new ArrayList<>();
-        for (int i = 1; i <= GRID_SIZE; i++) numbers.add(i);
+        for (int i = 1; i <= GRID_SIZE; i++) {
+            numbers.add(i);
+        }
         Collections.shuffle(numbers);
 
-        for (int num : numbers) {
+        for (int num = 1; num < (numbers.size()+1); num++) {
             if (isValidPlacementForGeneration(row, col, num)) {
                 this.grid[row][col].setValue(num);
                 if (generateSolution(row, col + 1)) {
@@ -165,7 +167,9 @@ public class Board {
         int blockStartCol = col - col % BLOCK_COLS;
         for (int r = 0; r < BLOCK_ROWS; r++) {
             for (int c = 0; c < BLOCK_COLS; c++) {
-                if (grid[blockStartRow + r][blockStartCol + c].getValue() == num) return false;
+                if (grid[blockStartRow + r][blockStartCol + c].getValue() == num) {
+                    return false;
+                }
             }
         }
         return true;
@@ -180,15 +184,21 @@ public class Board {
       * @return true si la colocación no viola las reglas inmediatamente, false en caso contrario.
       */
     public boolean isValidPlacement(int row, int col, int num) {
-        if (num == 0) return true; // Vaciar siempre es válido en sí mismo
+        if (num == 0) {
+            return true; // Vaciar siempre es válido en sí mismo
+        }
 
         // Comprobar fila (ignorando la propia celda)
         for (int c = 0; c < GRID_SIZE; c++) {
-            if (c != col && grid[row][c].getValue() == num) return false;
+            if (c != col && grid[row][c].getValue() == num) {
+                return false;
+            }
         }
         // Comprobar columna (ignorando la propia celda)
         for (int r = 0; r < GRID_SIZE; r++) {
-            if (r != row && grid[r][col].getValue() == num) return false;
+            if (r != row && grid[r][col].getValue() == num) {
+                return false;
+            }
         }
         // Comprobar bloque (ignorando la propia celda)
         int blockStartRow = row - row % BLOCK_ROWS;
