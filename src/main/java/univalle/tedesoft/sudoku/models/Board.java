@@ -133,7 +133,7 @@ public class Board {
         }
         Collections.shuffle(numbers);
 
-        for (int num = 0; num < numbers.size(); num++) {
+        for (int num = 1; num < (numbers.size()+1); num++) {
             if (isValidPlacementForGeneration(row, col, num)) {
                 this.grid[row][col].setValue(num);
                 if (generateSolution(row, col + 1)) {
