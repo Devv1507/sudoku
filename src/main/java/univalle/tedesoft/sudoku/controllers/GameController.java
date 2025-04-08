@@ -29,15 +29,13 @@ import univalle.tedesoft.sudoku.models.GameState;
  * Incluye mejoras: caché de nodos, gestión inteligente de errores, comprobación de victoria.
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
- * @version 1.1 (Refactorizado)
+ * @version 1.2 (Botones Reiniciar/Limpiar ajustados)
  */
 public class GameController {
 
     private static final int GRID_SIZE = Board.GRID_SIZE;
     private static final int BLOCK_ROWS = Board.BLOCK_ROWS; // 2
     private static final int BLOCK_COLS = Board.BLOCK_COLS; // 3
-
-    // Constantes para estilos (para facilitar mantenimiento)
     private static final String STYLE_FONT_SIZE = "-fx-font-size: 16px;";
     private static final String STYLE_FONT_BOLD = "-fx-font-weight: bold;";
     private static final String STYLE_ALIGNMENT_CENTER = "-fx-alignment: center;";
@@ -46,26 +44,18 @@ public class GameController {
     private static final String BORDER_COLOR_ERROR = "red";
     private static final String BORDER_WIDTH_NORMAL = "0.5px";
     private static final String BORDER_WIDTH_BLOCK = "2px"; // Borde grueso para bloques Y errores
-    private static final String BORDER_STYLE_SOLID = "-fx-border-style: solid;"; // Añadido para asegurar visibilidad
+    private static final String BORDER_STYLE_SOLID = "-fx-border-style: solid;";
 
     @FXML private Button clueButton;
     @FXML private Button helpButton;
-    @FXML private Button initButton;
     @FXML private Button restartButton;
+    @FXML private Button cleanButton;
     @FXML private GridPane sudokuGridPane;
 
     private Board board;
     private GameState gameState;
     private TextField currentEditingTextField = null;
-
-    /**
-     * Arreglo de nodos para cache.
-     */
     private Node[][] nodeGrid = new Node[GRID_SIZE][GRID_SIZE];
-    /**
-     * Permite resaltado de estilos inteligente
-     * TODO: mover toda esta lógica de estilos a la capa view
-     */
     private Set<Pair<Integer, Integer>> currentErrors = new HashSet<>();
 
     @FXML
@@ -76,25 +66,70 @@ public class GameController {
         // manejar el evento de clickear sobre la grilla
         this.sudokuGridPane.addEventHandler(MouseEvent.MOUSE_CLICKED, this::handleGridClick);
 
-        // Configurar acciones de botones (activando más botones)
-        this.initButton.setOnAction(event -> startNewGame());
-        this.restartButton.setOnAction(event -> restartCurrentGame());
+        // inicia un juego completamente nuevo
+        this.restartButton.setOnAction(event -> startNewGame());
+        // borra las entradas del usuario en el juego actual
+        this.cleanButton.setOnAction(event -> clearUserEntries());
+        // abrir la ventana de instrucciones
         this.helpButton.setOnAction(event -> showHelp());
-        // this.clueButton.setOnAction(event -> showClue()); // TODO: Descomentar cuando se implemente
+        // obtener pista de una posible entrada
+        this.clueButton.setOnAction(event -> showClue()); // Descomentado, asumiendo que la lógica existe
 
         // Iniciar el primer juego
         this.board.initializeBoard();
         this.updateGridUI();
     }
 
+    /**
+     * Inicia un juego completamente nuevo generando un nuevo puzzle.
+     * Muestra una confirmación previa.
+     * Asociado al botón "Reiniciar".
+     */
     private void startNewGame() {
         // Confirmación antes de iniciar nuevo juego
-        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION, "Iniciar un nuevo juego borrará el progreso actual. ¿Continuar?");
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION, "Esto generará un tablero de Sudoku completamente nuevo, perdiendo el progreso actual. ¿Continuar?");
         Optional<ButtonType> result = confirmation.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            this.board.initializeBoard();
-            this.updateGridUI();
-            this.sudokuGridPane.setDisable(false);
+            this.board.initializeBoard(); // Genera nuevo puzzle
+            this.updateGridUI();          // Refresca la UI con el nuevo puzzle
+            this.sudokuGridPane.setDisable(false); // Asegura que la grilla esté activa
+            System.out.println("Nuevo juego iniciado.");
+        }
+    }
+
+    /**
+     * Limpia todas las celdas editables del tablero actual,
+     * manteniendo los números fijos del puzzle original.
+     * Muestra una confirmación previa.
+     * Asociado al botón "cleanButton".
+     */
+    private void clearUserEntries() {
+        Alert confirmation = new Alert(Alert.AlertType.CONFIRMATION, "¿Seguro que deseas borrar todos los números que has ingresado en este tablero?");
+        Optional<ButtonType> result = confirmation.showAndWait();
+
+        if (result.isPresent() && result.get() == ButtonType.OK) {
+            System.out.println("Limpiando entradas del usuario...");
+            boolean changed = false;
+            for (int row = 0; row < GRID_SIZE; row++) {
+                for (int col = 0; col < GRID_SIZE; col++) {
+                    Cell cell = this.board.getCell(row, col);
+                    // Solo limpiar celdas editables que no estén ya vacías
+                    if (cell.getEditable() && cell.getValue() != 0) {
+                        // Usar setCellValue es seguro, aunque cell.setValue(0) también funcionaría
+                        // ya que Cell internamente respeta la editabilidad.
+                        this.board.setCellValue(row, col, 0);
+                        changed = true;
+                    }
+                }
+            }
+
+            // Si se realizó algún cambio, actualizar la UI y validar
+            if (changed) {
+                this.updateGridUI(); // Actualiza la vista para reflejar los cambios
+                // validateAndHighlightBoard(); // Quitar resaltado de errores (ya no aplican)
+            }
+            this.sudokuGridPane.setDisable(false); // Re-habilitar la grilla si estaba deshabilitada (p.ej., por victoria)
+            System.out.println("Entradas del usuario limpiadas.");
         }
     }
 
@@ -480,13 +515,6 @@ public class GameController {
         }
     }
 
-    // --- Funciones de Botones ---
-    private void restartCurrentGame() {
-        // Reinicia iniciando un juego completamente nuevo.
-        System.out.println("Reiniciar Juego - Iniciando uno nuevo...");
-        startNewGame();
-    }
-
     private void showHelp() {
         System.out.println("Mostrando Ayuda...");
         Alert helpAlert = new Alert(Alert.AlertType.INFORMATION);
@@ -499,12 +527,18 @@ public class GameController {
                 - Cada bloque de 2x3 debe contener todos los números del 1 al 6 sin repetición.
                 Haz clic en una celda vacía para ingresar un número. Las celdas con números en negrita son fijas.
                 Usa las teclas DELETE o BACKSPACE para borrar un número ingresado.
+
+                Botones:
+                - Reiniciar: Inicia un puzzle de Sudoku completamente nuevo.
+                - Limpiar: Borra todos los números ingresados por el usuario en el puzzle actual.
+                - Ayuda: Muestra esta ventana.
+                - ?: Muestra una pista (si es posible).
                 """);
         helpAlert.showAndWait();
     }
 
     private void showClue() {
-        System.out.println("Pista - Funcionalidad no implementada todavía.");
+        System.out.println("Pista - Buscando sugerencia...");
         // --- Lógica básica para pista (requiere prueba y refinamiento) ---
         for (int r = 0; r < GRID_SIZE; r++) {
             for (int c = 0; c < GRID_SIZE; c++) {
