@@ -6,7 +6,6 @@ import univalle.tedesoft.sudoku.models.Board;
 import univalle.tedesoft.sudoku.models.Cell;
 
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -103,7 +102,7 @@ public class GameView extends Stage {
         // Evitar que haya campos activos al re-renderizar
         currentEditingTextField = null;
         // Limpiar resaltados de hover anteriores
-        currentlyHighlightedCoords.clear();
+        this.currentlyHighlightedCoords.clear();
 
         for (int row = 0; row < GRID_SIZE; row++) {
             for (int col = 0; col < GRID_SIZE; col++) {
@@ -144,21 +143,18 @@ public class GameView extends Stage {
         // Aplicar el estilo inicial a todas las celdas DESPUÉS de que estén todas en la caché nodeGrid
         for (int r = 0; r < GRID_SIZE; r++) {
             for (int c = 0; c < GRID_SIZE; c++) {
-                updateCellStyle(r, c);
+                this.updateCellStyle(r, c);
             }
         }
 
-        // Reaplicar el estado de errores visualmente usando la nueva lógica
-        // highlightErrors ahora solo necesita las nuevas coordenadas de error
-        // y llamará a updateCellStyle internamente.
-        highlightErrors(this.currentErrorCoords); // Llama a la versión adaptada abajo
+        // Reaplicar el estado de errores visualmente
+        highlightErrors(this.currentErrorCoords);
     }
 
     /**
      * Actualiza los estilos de las celdas para mostrar cuáles tienen errores.
      * Actualiza el estado del error y llama a updateCellStyle.
      * @param newErrorCoords Conjunto de coordenadas (fila, columna) de las celdas con errores.
-     * @see updateCellStyle
      */
     public void highlightErrors(Set<Pair<Integer, Integer>> newErrorCoords) {
         Set<Pair<Integer, Integer>> oldErrorCoords = this.currentErrorCoords;
@@ -171,7 +167,7 @@ public class GameView extends Stage {
 
         // Actualizar el estilo de todas las celdas afectadas
         for (Pair<Integer, Integer> coord : changedCoords) {
-            updateCellStyle(coord.getKey(), coord.getValue());
+            this.updateCellStyle(coord.getKey(), coord.getValue());
         }
     }
 
@@ -214,10 +210,10 @@ public class GameView extends Stage {
         if (coords == null) {
             // Clic fuera de una celda reconocible (i.e. en las líneas de la grilla)
             // Si había un campo en edición, quitarle el foco
-            if (currentEditingTextField != null) {
+            if (this.currentEditingTextField != null) {
                 // Mover foco a la grilla como contenedor
-                sudokuGridPane.requestFocus();
-                currentEditingTextField = null;
+                this.sudokuGridPane.requestFocus();
+                this.currentEditingTextField = null;
             }
             return; // Ignorar este clic
         }
@@ -225,34 +221,31 @@ public class GameView extends Stage {
         int row = coords[0];
         int col = coords[1];
 
-        // Informar al controlador que se hizo clic en esta celda (puede necesitarlo)
-        controller.cellClicked(row, col);
-
         // --- Lógica de UI para manejar la edición ---
         Node targetNodeInGrid = nodeGrid[row][col]; // Nodo actual en esa posición según nuestra caché
 
         if (targetNodeInGrid instanceof Pane) {
             // Clic en un placeholder (celda editable vacía) -> Convertir a TextField
-            switchToTextField(targetNodeInGrid, row, col);
+            this.switchToTextField(targetNodeInGrid, row, col);
 
         } else if (targetNodeInGrid instanceof TextField) {
             // Clic en un TextField existente
-            if (currentEditingTextField != targetNodeInGrid) {
+            if (this.currentEditingTextField != targetNodeInGrid) {
                 // Si se estaba editando otro campo, quitarle el foco
-                if (currentEditingTextField != null) {
-                    sudokuGridPane.requestFocus(); // Mover foco fuera del campo anterior
+                if (this.currentEditingTextField != null) {
+                    this.sudokuGridPane.requestFocus(); // Mover foco fuera del campo anterior
                 }
                 // Dar foco al campo clickeado
                 targetNodeInGrid.requestFocus();
-                currentEditingTextField = (TextField) targetNodeInGrid;
+                this.currentEditingTextField = (TextField) targetNodeInGrid;
             }
-            // Si se clickea en el mismo campo que ya tiene foco, no hacer nada
+            // No hacer nada si se clickea en el mismo campo que ya tiene foco
 
-        } else { // Clic en Label (fijo) u otro nodo no editable
+        } else {
             // Si se estaba editando un campo, quitarle el foco
-            if (currentEditingTextField != null) {
-                sudokuGridPane.requestFocus(); // Mover foco fuera
-                currentEditingTextField = null;
+            if (this.currentEditingTextField != null) {
+                this.sudokuGridPane.requestFocus();
+                this.currentEditingTextField = null;
             }
         }
     }
@@ -265,23 +258,23 @@ public class GameView extends Stage {
      * @param col La columna.
      */
     private void switchToTextField(Node nodeToReplace, int row, int col) {
-        if (currentEditingTextField != null && currentEditingTextField != nodeToReplace) {
-            sudokuGridPane.requestFocus();
+        if (this.currentEditingTextField != null && this.currentEditingTextField != nodeToReplace) {
+            this.sudokuGridPane.requestFocus();
         }
 
         TextField textField = this.createTextField(row, col); // Ya tiene handlers de hover
 
-        sudokuGridPane.getChildren().remove(nodeToReplace);
+        this.sudokuGridPane.getChildren().remove(nodeToReplace);
         GridPane.setRowIndex(textField, row);
         GridPane.setColumnIndex(textField, col);
-        sudokuGridPane.getChildren().add(textField);
-        nodeGrid[row][col] = textField; // Actualizar caché
+        this.sudokuGridPane.getChildren().add(textField);
+        this.nodeGrid[row][col] = textField; // Actualizar caché
 
         // Aplicar estilo correcto (puede estar resaltado por hover o tener error)
-        updateCellStyle(row, col);
+        this.updateCellStyle(row, col);
 
         textField.requestFocus();
-        currentEditingTextField = textField; // Marcar como campo en edición
+        this.currentEditingTextField = textField; // Marcar como campo en edición
     }
 
     /**
@@ -291,19 +284,19 @@ public class GameView extends Stage {
      * @param col La columna.
      */
     private void replaceTextFieldWithPlaceholder(TextField textField, int row, int col) {
-        if (nodeGrid[row][col] == textField) {
-            sudokuGridPane.getChildren().remove(textField);
+        if (this.nodeGrid[row][col] == textField) {
+            this.sudokuGridPane.getChildren().remove(textField);
             Pane placeholder = createPlaceholderPane(row, col);
             GridPane.setRowIndex(placeholder, row);
             GridPane.setColumnIndex(placeholder, col);
-            sudokuGridPane.getChildren().add(placeholder);
-            nodeGrid[row][col] = placeholder; // Actualizar caché
+            this.sudokuGridPane.getChildren().add(placeholder);
+            this.nodeGrid[row][col] = placeholder; // Actualizar caché
 
             // Restaurar estilo base (o de error si lo tenía)
-            updateCellStyle(row, col);
+            this.updateCellStyle(row, col);
         }
-        if(currentEditingTextField == textField) {
-            currentEditingTextField = null;
+        if(this.currentEditingTextField == textField) {
+            this.currentEditingTextField = null;
         }
     }
 
@@ -326,15 +319,15 @@ public class GameView extends Stage {
                 validEditingState.matcher(change.getControlNewText()).matches() ? change : null;
         textField.setTextFormatter(new TextFormatter<>(filter));
         textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            controller.cellValueChanged(row, col, newValue);
+            this.controller.cellValueChanged(row, col, newValue);
         });
         textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
             if (!isNowFocused && textField.getText().isEmpty()) {
                 replaceTextFieldWithPlaceholder(textField, row, col);
-            } else if (!isNowFocused && currentEditingTextField == textField) {
-                currentEditingTextField = null;
+            } else if (!isNowFocused && this.currentEditingTextField == textField) {
+                this.currentEditingTextField = null;
             } else if (isNowFocused) {
-                currentEditingTextField = textField;
+                this.currentEditingTextField = textField;
             }
         });
 
@@ -424,9 +417,9 @@ public class GameView extends Stage {
         }
         Node node = nodeGrid[row][col];
 
-        boolean isFixed = !controller.isCellEditable(row, col);
-        boolean isError = currentErrorCoords.contains(new Pair<>(row, col));
-        boolean isHighlighted = currentlyHighlightedCoords.contains(new Pair<>(row, col));
+        boolean isFixed = !this.controller.isCellEditable(row, col);
+        boolean isError = this.currentErrorCoords.contains(new Pair<>(row, col));
+        boolean isHighlighted = this.currentlyHighlightedCoords.contains(new Pair<>(row, col));
 
         // 1. Base Font/Alignment Styles
         StringBuilder styleBuilder = new StringBuilder();
@@ -436,9 +429,6 @@ public class GameView extends Stage {
             if (isFixed && node instanceof Labeled) {   // Negrita solo para Labels fijos
                 styleBuilder.append(STYLE_FONT_BOLD);
             }
-        } else if (node instanceof Pane) {
-            // Los Panes no tienen texto, pero podrían necesitar tamaño si no lo gestiona GridPane
-            // ((Pane) node).setPrefSize(40, 40); // Opcional: asegurar tamaño
         }
 
         // 2. Border Styles (Determinado por error y posición de bloque)
@@ -473,8 +463,10 @@ public class GameView extends Stage {
         } else {
             // Fondo transparente por defecto si no está resaltado
             styleBuilder.append(" -fx-background-color: transparent;");
-            // Podrías querer un fondo blanco para TextFields:
-            // if (node instanceof TextField) { styleBuilder.append(" -fx-background-color: white;"); }
+            // Fondo blanco para TextFields:
+             if (node instanceof TextField) {
+                 styleBuilder.append(" -fx-background-color: white;");
+             }
         }
 
         // Aplicar el estilo final al nodo
@@ -495,28 +487,28 @@ public class GameView extends Stage {
         int enterCol = coords[1];
 
         // 1. Recordar qué celdas estaban resaltadas antes
-        Set<Pair<Integer, Integer>> oldHighlights = new HashSet<>(currentlyHighlightedCoords);
+        Set<Pair<Integer, Integer>> oldHighlights = new HashSet<>(this.currentlyHighlightedCoords);
 
         // 2. Limpiar el estado de resaltado actual
-        currentlyHighlightedCoords.clear();
+        this.currentlyHighlightedCoords.clear();
 
         // 3. Calcular y establecer el nuevo estado de resaltado (fila y columna)
         // Añadir toda la fila
         for (int c = 0; c < GRID_SIZE; c++) {
-            currentlyHighlightedCoords.add(new Pair<>(enterRow, c));
+            this.currentlyHighlightedCoords.add(new Pair<>(enterRow, c));
         }
         // Añadir toda la columna
         for (int r = 0; r < GRID_SIZE; r++) {
-            currentlyHighlightedCoords.add(new Pair<>(r, enterCol));
+            this.currentlyHighlightedCoords.add(new Pair<>(r, enterCol));
         }
 
         // 4. Determinar todas las celdas afectadas (las que dejaron de estar resaltadas + las nuevas)
         Set<Pair<Integer, Integer>> affectedCoords = new HashSet<>(oldHighlights);
-        affectedCoords.addAll(currentlyHighlightedCoords); // Unión de viejas y nuevas
+        affectedCoords.addAll(this.currentlyHighlightedCoords); // Unión de viejas y nuevas
 
         // 5. Actualizar el estilo de todas las celdas afectadas
         for (Pair<Integer, Integer> coord : affectedCoords) {
-            updateCellStyle(coord.getKey(), coord.getValue());
+            this.updateCellStyle(coord.getKey(), coord.getValue());
         }
     }
 
@@ -527,14 +519,14 @@ public class GameView extends Stage {
      */
     private void handleMouseExited(MouseEvent event) {
         // 1. Recordar qué celdas estaban resaltadas
-        Set<Pair<Integer, Integer>> oldHighlights = new HashSet<>(currentlyHighlightedCoords);
+        Set<Pair<Integer, Integer>> oldHighlights = new HashSet<>(this.currentlyHighlightedCoords);
 
         // 2. Limpiar el estado de resaltado
-        currentlyHighlightedCoords.clear();
+        this.currentlyHighlightedCoords.clear();
 
         // 3. Actualizar el estilo de las celdas que *estaban* resaltadas para quitarles el fondo
         for (Pair<Integer, Integer> coord : oldHighlights) {
-            updateCellStyle(coord.getKey(), coord.getValue());
+            this.updateCellStyle(coord.getKey(), coord.getValue());
         }
     }
 
