@@ -1,5 +1,6 @@
 package univalle.tedesoft.sudoku.views;
 
+import javafx.geometry.Pos;
 import univalle.tedesoft.sudoku.Main;
 import univalle.tedesoft.sudoku.controllers.GameController;
 import univalle.tedesoft.sudoku.models.Board;
@@ -261,9 +262,17 @@ public class GameView extends Stage {
         if (this.currentEditingTextField != null && this.currentEditingTextField != nodeToReplace) {
             this.sudokuGridPane.requestFocus();
         }
-
         TextField textField = this.createTextField(row, col); // Ya tiene handlers de hover
-
+        textField.setAlignment(Pos.CENTER);
+        // Copiar tamaño del nodo anterior (asegúrate de que ya esté renderizado)
+        double width = nodeToReplace.getBoundsInParent().getWidth();
+        double height = nodeToReplace.getBoundsInParent().getHeight();
+        textField.setPrefWidth(width);
+        textField.setPrefHeight(height);
+        textField.setMinWidth(width);
+        textField.setMaxWidth(width);
+        textField.setMinHeight(height);
+        textField.setMaxHeight(height);
         this.sudokuGridPane.getChildren().remove(nodeToReplace);
         GridPane.setRowIndex(textField, row);
         GridPane.setColumnIndex(textField, col);
@@ -309,8 +318,8 @@ public class GameView extends Stage {
      */
     private TextField createTextField(int row, int col) {
         TextField textField = new TextField();
-        textField.setPrefSize(40, 40);
-        textField.setMaxSize(40, 40);
+        textField.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE); // que crezca a todo lo disponible
+        textField.setAlignment(Pos.CENTER); // alinear texto al centro
         textField.setUserData(new int[]{row, col});
 
         // Filtro y listeners existentes
@@ -330,7 +339,6 @@ public class GameView extends Stage {
                 this.currentEditingTextField = textField;
             }
         });
-
         // Añadir handlers de hover
         textField.setOnMouseEntered(this::handleMouseEntered);
         textField.setOnMouseExited(this::handleMouseExited);
@@ -465,7 +473,7 @@ public class GameView extends Stage {
             styleBuilder.append(" -fx-background-color: transparent;");
             // Fondo blanco para TextFields:
              if (node instanceof TextField) {
-                 styleBuilder.append(" -fx-background-color: white;");
+                 styleBuilder.append(" -fx-background-color: transparent;");
              }
         }
 
