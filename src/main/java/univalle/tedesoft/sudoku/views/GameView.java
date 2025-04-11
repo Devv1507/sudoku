@@ -155,6 +155,7 @@ public class GameView extends Stage {
     /**
      * Actualiza los estilos de las celdas para mostrar cuáles tienen errores.
      * Actualiza el estado del error y llama a updateCellStyle.
+     * Lanza un mensaje de error al ingresar valores inválidos.
      * @param newErrorCoords Conjunto de coordenadas (fila, columna) de las celdas con errores.
      */
     public void highlightErrors(Set<Pair<Integer, Integer>> newErrorCoords) {
@@ -169,6 +170,11 @@ public class GameView extends Stage {
         // Actualizar el estilo de todas las celdas afectadas
         for (Pair<Integer, Integer> coord : changedCoords) {
             this.updateCellStyle(coord.getKey(), coord.getValue());
+        }
+
+        if (!newErrorCoords.isEmpty()) {
+            showDialog(Alert.AlertType.ERROR, "Errores detectados",
+                    "Algunas celdas son inválidas", "Revisa los valores marcados en rojo.");
         }
     }
 
