@@ -48,8 +48,8 @@ public class GameController {
         // Configurar acciones de los botones
         this.restartButton.setOnAction(event -> startNewGame());
         this.cleanButton.setOnAction(event -> clearUserEntries());
-        this.helpButton.setOnAction(event -> showHelp());
-        this.clueButton.setOnAction(event -> showClue());
+        this.helpButton.setOnAction(event -> showClue());
+        this.clueButton.setOnAction(event -> showHelp());
 
         if (this.view != null) {
             initializeGameAndRender();
@@ -158,8 +158,8 @@ public class GameController {
                Botones:
                - Reiniciar: Inicia un puzzle de Sudoku completamente nuevo.
                - Limpiar: Borra todos los números ingresados por el usuario en el puzzle actual.
-               - Ayuda: Muestra esta ventana.
-               - ?: Muestra una pista (si es posible).
+               - Ayuda: Muestra una pista (si es posible).
+               - ?: Muestra esta ventana.
                """
         );
     }
@@ -171,6 +171,14 @@ public class GameController {
         if (view == null) return;
         System.out.println("Pista - Buscando sugerencia...");
         boolean clueFound = false;
+
+        int emptyCells = board.countEmptyEditableCells();
+        //Si solo hay un espacio vacío deja de dr pistas.
+        if (emptyCells <= 1) {
+            view.showDialog(Alert.AlertType.INFORMATION, "Pista", null,
+                    "No se puede dar una pista más sin completar el tablero.");
+            return;
+        }
         for (int r = 0; r < Board.GRID_SIZE; r++) {
             for (int c = 0; c < Board.GRID_SIZE; c++) {
                 Cell cell = board.getCell(r, c);
