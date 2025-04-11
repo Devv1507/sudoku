@@ -263,16 +263,6 @@ public class GameView extends Stage {
             this.sudokuGridPane.requestFocus();
         }
         TextField textField = this.createTextField(row, col); // Ya tiene handlers de hover
-        textField.setAlignment(Pos.CENTER);
-        // Copiar tamaño del nodo anterior (asegúrate de que ya esté renderizado)
-        double width = nodeToReplace.getBoundsInParent().getWidth();
-        double height = nodeToReplace.getBoundsInParent().getHeight();
-        textField.setPrefWidth(width);
-        textField.setPrefHeight(height);
-        textField.setMinWidth(width);
-        textField.setMaxWidth(width);
-        textField.setMinHeight(height);
-        textField.setMaxHeight(height);
         this.sudokuGridPane.getChildren().remove(nodeToReplace);
         GridPane.setRowIndex(textField, row);
         GridPane.setColumnIndex(textField, col);
@@ -447,6 +437,7 @@ public class GameView extends Stage {
             // Estilo de borde de error (rojo y grueso)
             topBorderWidth = rightBorderWidth = bottomBorderWidth = leftBorderWidth = BORDER_WIDTH_BLOCK;
             topBorderColor = rightBorderColor = bottomBorderColor = leftBorderColor = BORDER_COLOR_ERROR;
+
         } else {
             // Estilo de borde normal (delgado gris, más grueso negro en límites de bloque)
             topBorderWidth = BORDER_WIDTH_NORMAL; // Borde superior siempre normal (o BORDER_WIDTH_BLOCK si row == 0?) - dejémoslo normal
