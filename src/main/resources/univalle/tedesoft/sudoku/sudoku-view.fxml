@@ -14,7 +14,7 @@
       <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="15.0">
          <children>
             <Label text="SUDOKU" />
-            <Button fx:id="clueButton" mnemonicParsing="false" text="?" />
+            <Button fx:id="instructionsButton" mnemonicParsing="false" text="?" />
          </children>
          <VBox.margin>
             <Insets />
@@ -42,7 +42,7 @@
          <children>
             <Button fx:id="restartButton" mnemonicParsing="false" text="Reiniciar" />
             <Button fx:id="cleanButton" mnemonicParsing="false" text="Limpiar" />
-            <Button fx:id="helpButton" mnemonicParsing="false" text="Ayuda" />
+            <Button fx:id="clueButton" mnemonicParsing="false" text="Pista" />
          </children>
       </HBox>
    </children>
