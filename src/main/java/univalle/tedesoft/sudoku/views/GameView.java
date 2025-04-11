@@ -197,6 +197,31 @@ public class GameView extends Stage {
     }
 
     /**
+     * Muestra el diálogo de ayuda con las reglas del juego.
+     * Encapsula el contenido específico de la ayuda.
+     */
+    public void showHelpDialog() {
+        String helpTitle = "Ayuda Sudoku 6x6";
+        String helpHeader = "Reglas del Juego";
+        String helpContent = """
+           Completa la cuadrícula de 6x6 con números del 1 al 6.
+           - Cada fila debe contener todos los números del 1 al 6 sin repetición.
+           - Cada columna debe contener todos los números del 1 al 6 sin repetición.
+           - Cada bloque de 2x3 debe contener todos los números del 1 al 6 sin repetición.
+           Haz clic en una celda vacía para ingresar un número. Las celdas con números en negrita son fijas.
+           Usa las teclas DELETE o BACKSPACE para borrar un número ingresado.
+
+           Botones:
+           - Reiniciar: Inicia un puzzle de Sudoku completamente nuevo.
+           - Limpiar: Borra todos los números ingresados por el usuario en el puzzle actual.
+           - Ayuda: Muestra una pista (si es posible).
+           - ?: Muestra esta ventana.
+           """; // El contenido ahora reside aquí
+
+        this.showDialog(Alert.AlertType.INFORMATION, helpTitle, helpHeader, helpContent);
+    }
+
+    /**
      * Habilita o deshabilita la interacción del usuario con el GridPane.
      * @param disable true para deshabilitar, false para habilitar.
      */
