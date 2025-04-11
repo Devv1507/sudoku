@@ -1,9 +1,9 @@
 package univalle.tedesoft.sudoku.models;
 
-import javafx.util.Pair;
-
 import java.util.HashSet;
 import java.util.Set;
+
+import javafx.util.Pair;
 
 /**
  * Representa un bloque de 2x3 dentro del tablero de Sudoku 6x6.

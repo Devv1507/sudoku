@@ -1,8 +1,9 @@
 package univalle.tedesoft.sudoku.models;
 
-import javafx.util.Pair;
 import java.util.HashSet;
 import java.util.Set;
+
+import javafx.util.Pair;
 
 /**
  * Clase responsable de validar el estado actual del tablero de Sudoku.
