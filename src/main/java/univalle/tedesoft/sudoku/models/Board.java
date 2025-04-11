@@ -389,4 +389,21 @@ public class Board {
         }
         return snapshot;
     }
+
+    /**
+     * Cuenta la cantidad de celdas vacías que son editables en el tablero.
+     * @return número de celdas editables de valor 0.
+     */
+    public int countEmptyEditableCells() {
+        int count = 0;
+        for (int r = 0; r < GRID_SIZE; r++) {
+            for (int c = 0; c < GRID_SIZE; c++) {
+                Cell cell = getCell(r, c);
+                if (cell.getEditable() && cell.getValue() == 0) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
 }
