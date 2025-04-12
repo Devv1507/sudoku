@@ -9,7 +9,7 @@ import java.util.*;
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
  */
-public class Board {
+public class Board implements IBoard {
     /**
      * Dimensión de la cuadrícula (6x6).
      */

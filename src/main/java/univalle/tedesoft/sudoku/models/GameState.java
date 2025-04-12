@@ -11,7 +11,7 @@ import javafx.util.Pair;
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
  */
-public class GameState{
+public class GameState implements IGameState {
     /**
      * Referencia al tablero de Sudoku que se está validando.
      * @see Board
@@ -143,7 +143,7 @@ public class GameState{
      * @param col La columna de la celda vacía.
      * @return Un número válido (1-6) que puede ir en esa celda, o 0 si no procede.
      */
-    public int getSuggestion(int row, int col) {
+    public int getClue(int row, int col) {
         Cell cell = this.board.getCell(row, col);
         if (!cell.getEditable() || cell.getValue() != 0) {
             return 0;

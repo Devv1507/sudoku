@@ -26,12 +26,11 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 /**
- * Representa la ventana principal y la LÓGICA DE VISTA del juego Sudoku (MVC).
+ * Representa la ventana principal y la lógica de vista del juego Sudoku.
  * Carga FXML, renderiza el tablero, maneja interacciones de UI directas
  * y delega eventos lógicos al GameController.
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
- * @version 1.3 (Refactorizado MVC)
  */
 public class GameView extends Stage {
     // Constantes de Estilo
@@ -56,7 +55,7 @@ public class GameView extends Stage {
     // Estado Interno de la Vista
     private Node[][] nodeGrid = new Node[GRID_SIZE][GRID_SIZE]; // Cache de nodos UI para acceso rápido
     private TextField currentEditingTextField = null; // Campo de texto activo actualmente
-    private Set<Pair<Integer, Integer>> currentErrorCoords = new HashSet<>(); // Coords con error resaltado
+    private Set<Pair<Integer, Integer>> currentErrorCoords = new HashSet<>(); // Coordenadas con error resaltado
     private Set<Pair<Integer, Integer>> currentlyHighlightedCoords = new HashSet<>(); // resaltar celdas por hover
 
     /**
@@ -176,24 +175,6 @@ public class GameView extends Stage {
             showDialog(Alert.AlertType.ERROR, "Errores detectados",
                     "Algunas celdas son inválidas", "Revisa los valores marcados en rojo.");
         }
-    }
-
-    /**
-     * Muestra un diálogo de alerta estándar.
-     * @param type Tipo de alerta (INFORMATION, CONFIRMATION, etc.).
-     * @param title Título de la ventana del diálogo.
-     * @param header Texto del encabezado.
-     * @param content Texto principal del cuerpo.
-     * @return Un Optional que contiene el ButtonType presionado por el usuario (útil para CONFIRMATION).
-     */
-    public Optional<ButtonType> showDialog(Alert.AlertType type, String title, String header, String content) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(header);
-        alert.setContentText(content);
-        // Podríamos añadirle icono o hacerlo modal si fuera necesario
-        // alert.initOwner(this); // Asociar al Stage principal
-        return alert.showAndWait();
     }
 
     /**
@@ -404,7 +385,6 @@ public class GameView extends Stage {
         return null;
     }
 
-
     /**
      * Aplica el estilo completo a una celda basándose en su estado actual
      * (fija/editable, error, resaltado por hover).
@@ -478,6 +458,7 @@ public class GameView extends Stage {
         node.setStyle(styleBuilder.toString().trim());
     }
 
+
     /**
      * Manejador para cuando el ratón entra en una celda.
      * Calcula las nuevas celdas a resaltar y actualiza sus estilos.
@@ -534,6 +515,101 @@ public class GameView extends Stage {
             this.updateCellStyle(coord.getKey(), coord.getValue());
         }
     }
+
+
+    // -- Métodos para mostrar alertas
+
+    /**
+     * Muestra un diálogo de alerta estándar.
+     * @param type Tipo de alerta (INFORMATION, CONFIRMATION, etc.).
+     * @param title Título de la ventana del diálogo.
+     * @param header Texto del encabezado.
+     * @param content Texto principal del cuerpo.
+     * @return Un Optional que contiene el ButtonType presionado por el usuario (útil para CONFIRMATION).
+     */
+    public Optional<ButtonType> showDialog(Alert.AlertType type, String title, String header, String content) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(header);
+        alert.setContentText(content);
+        // Podríamos añadirle icono o hacerlo modal si fuera necesario
+        // alert.initOwner(this); // Asociar al Stage principal
+        return alert.showAndWait();
+    }
+
+    /**
+     * Muestra el diálogo de ayuda con las reglas del juego.
+     * Encapsula el contenido específico de la ayuda.
+     */
+    public void showHelpDialog() {
+        String helpTitle = "Ayuda Sudoku 6x6";
+        String helpHeader = "Reglas del Juego";
+        String helpContent = """
+           Completa la cuadrícula de 6x6 con números del 1 al 6.
+           - Cada fila debe contener todos los números del 1 al 6 sin repetición.
+           - Cada columna debe contener todos los números del 1 al 6 sin repetición.
+           - Cada bloque de 2x3 debe contener todos los números del 1 al 6 sin repetición.
+           Haz clic en una celda vacía para ingresar un número. Las celdas con números en negrita son fijas.
+           Usa las teclas DELETE o BACKSPACE para borrar un número ingresado.
+
+           Botones:
+           - Reiniciar: Inicia un puzzle de Sudoku completamente nuevo.
+           - Limpiar: Borra todos los números ingresados por el usuario en el puzzle actual.
+           - Ayuda: Muestra una pista (si es posible).
+           - ?: Muestra esta ventana.
+           """; // El contenido ahora reside aquí
+
+        this.showDialog(Alert.AlertType.INFORMATION, helpTitle, helpHeader, helpContent);
+    }
+
+    /**
+     * Muestra un diálogo informativo indicando que no se pueden dar más pistas.
+     */
+    public void showNoMoreCluesDialog() {
+        showDialog(Alert.AlertType.INFORMATION, "Pista", null,
+                "No se puede dar una pista más sin completar el tablero.");
+    }
+
+    /**
+     * Muestra un diálogo informativo indicando que no hay pistas obvias disponibles.
+     */
+    public void showNoObviousCluesDialog() {
+        showDialog(Alert.AlertType.INFORMATION, "Pista", null,
+                "No hay pistas obvias disponibles o el tablero está lleno/inválido.");
+    }
+
+    /**
+     * Muestra un diálogo informativo indicando que se ha ganado el juego.
+     */
+    public void showWinDialog() {
+        showDialog(Alert.AlertType.INFORMATION, "¡Felicidades!", "¡Sudoku Resuelto!",
+                "¡Has completado el Sudoku exitosamente!");
+    }
+
+    /**
+     * Muestra un diálogo de confirmación para reiniciar el juego.
+     * @return Optional con el botón presionado por el usuario.
+     */
+    public Optional<ButtonType> showRestartConfirmationDialog() {
+        return showDialog(Alert.AlertType.CONFIRMATION,
+                "Confirmar Reinicio", "Nuevo Juego",
+                """
+                        Esto generará un tablero de Sudoku completamente nuevo,
+                        perdiendo el progreso actual. ¿Continuar?
+                        """);
+    }
+
+    /**
+     * Muestra un diálogo de confirmación para limpiar las entradas del usuario.
+     * @return Optional con el botón presionado por el usuario.
+     */
+    public Optional<ButtonType> showClearConfirmationDialog() {
+        return showDialog(Alert.AlertType.CONFIRMATION,
+                "Confirmar Limpieza", "Limpiar Entradas",
+                "¿Seguro que deseas borrar todos los números que has ingresado en este tablero?");
+    }
+
+    // -- Patrón Singleton
 
     private static class GameViewHolder {
         private static GameView INSTANCE;
