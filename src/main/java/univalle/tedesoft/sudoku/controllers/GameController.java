@@ -34,6 +34,7 @@ public class GameController {
     @FXML private Button restartButton;
     @FXML private Button cleanButton;
     @FXML private GridPane sudokuGridPane;
+    private int pistas = 0;
 
     /**
      * Inicializa el modelo y configura los manejadores de eventos de los botones.
@@ -179,6 +180,11 @@ public class GameController {
                     "No se puede dar una pista más sin completar el tablero.");
             return;
         }
+        if (pistas == 10) {
+            view.showDialog(Alert.AlertType.INFORMATION, "Realmente la necesitas? ", null,
+                    "Realmente quieres ganar asi?.");
+            return;
+        }
         for (int r = 0; r < Board.GRID_SIZE; r++) {
             for (int c = 0; c < Board.GRID_SIZE; c++) {
                 Cell cell = board.getCell(r, c);
@@ -194,6 +200,7 @@ public class GameController {
                         this.view.highlightErrors(this.gameState.getInvalidCells());
                         // TODO: Idealmente, pedir a la vista que enfoque la celda: view.focusCell(r, c);
                         clueFound = true;
+                        pistas++;
                         break; // Salir del bucle interno
                     }
                 }
