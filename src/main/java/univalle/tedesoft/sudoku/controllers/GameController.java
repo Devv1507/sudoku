@@ -13,6 +13,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.GridPane;
 import javafx.util.Pair;
+import univalle.tedesoft.sudoku.views.GameView;
 
 /**
  * Controlador (en patrón MVC) para el juego Sudoku.
@@ -40,7 +41,6 @@ public class GameController {
      */
     @FXML
     public void initialize() {
-        // Crear instancias del modelo
         this.board = new Board();
         this.gameState = new GameState(board);
 
@@ -57,10 +57,10 @@ public class GameController {
 
     /**
      * Establece la referencia a la vista asociada a este controlador.
-     * @param view La instancia de GameView.
+     * @param newView La instancia de GameView
      */
-    public void setView(GameView view) {
-        this.view = view;
+    public void setView(GameView newView) {
+        this.view = newView;
         if (this.board != null && this.gameState != null) {
             initializeGameAndRender();
         }
@@ -92,13 +92,13 @@ public class GameController {
      * Inicia un puzzle completamente nuevo.
      */
     private void startNewGame() {
-        if (view == null) return; // No hacer nada si la vista no está lista
+        if (this.view == null) return; // No hacer nada si la vista no está lista
 
         // Solicitar confirmación a la vista
-        Optional<ButtonType> result = view.showRestartConfirmationDialog();
+        Optional<ButtonType> result = this.view.showRestartConfirmationDialog();
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            this.initializeGameAndRender(); // Re-inicializa modelo y pide renderizado/validación a la vista
+            this.initializeGameAndRender();
         }
     }
 
@@ -106,10 +106,10 @@ public class GameController {
      * Limpia las entradas del usuario en el tablero actual.
      */
     private void clearUserEntries() {
-        if (view == null) return;
+        if (this.view == null) return;
 
         // Solicitar confirmación a la vista
-        Optional<ButtonType> result = view.showClearConfirmationDialog();
+        Optional<ButtonType> result = this.view.showClearConfirmationDialog();
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
             System.out.println("Limpiando entradas del usuario...");
@@ -139,64 +139,62 @@ public class GameController {
      * Muestra la ayuda del juego usando un diálogo en la vista.
      */
     private void showHelp() {
-        if (view == null) {
+        if (this.view == null) {
             System.err.println("Error: Intento de mostrar ayuda sin vista establecida.");
             return;
         }
-        view.showHelpDialog();
+        this.view.showHelpDialog();
     }
 
     /**
      * Busca y aplica una pista en el tablero.
      */
     private void showClue() {
-        if (view == null) return;
+        if (this.view == null) return;
         System.out.println("Pista - Buscando sugerencia...");
         boolean clueFound = false;
 
         int emptyCells = board.countEmptyEditableCells();
         // Si solo hay un espacio vacío (o menos), no se puede dar pista sin resolverlo
         if (emptyCells <= 1) {
-            view.showNoMoreCluesDialog();
+            this.view.showNoMoreCluesDialog();
             return;
         }
-        for (int r = 0; r < Board.GRID_SIZE; r++) {
-            for (int c = 0; c < Board.GRID_SIZE; c++) {
-                Cell cell = board.getCell(r, c);
+        for (int row = 0; row < Board.GRID_SIZE; row++) {
+            for (int col = 0; col < Board.GRID_SIZE; col++) {
+                Cell cell = board.getCell(row, col);
                 // Buscar primera celda editable vacía para la que haya sugerencia
                 if (cell.getEditable() && cell.getValue() == 0) {
-                    int suggestion = gameState.getClue(r, c);
+                    int suggestion = gameState.getClue(row, col);
                     if (suggestion > 0) {
-                        System.out.println("Pista: Poner " + suggestion + " en (" + r + "," + c + ")");
+                        System.out.println("Pista: Poner " + suggestion + " en (" + row + "," + col + ")");
                         // Actualizar el Modelo
-                        this.board.setCellValue(r, c, suggestion);
+                        this.board.setCellValue(row, col, suggestion);
                         // Pedir a la Vista que renderice y valide
                         this.view.renderBoard(this.board.getGridSnapshot());
-                        validateAndHighlightBoard(); // Llamar a validación aquí como en tu versión original
-                        // TODO: Idealmente, pedir a la vista que enfoque la celda: view.focusCell(r, c);
+                        this.validateAndHighlightBoard();
                         clueFound = true;
-                        break; // Salir del bucle interno
+                        break;
                     }
                 }
             }
-            if (clueFound) break; // Salir del bucle externo
+            if (clueFound) break;
         }
 
         if (!clueFound) {
-            // Informar al usuario a través de la vista usando el método específico
-            view.showNoObviousCluesDialog();
+            this.view.showNoObviousCluesDialog();
         }
     }
 
     /**
-     * Llamado por GameView cuando el texto de un TextField cambia.
+     * Llamado por Gamethis.view cuando el texto de un TextField cambia.
      * Actualiza el modelo y desencadena la validación y posible condición de victoria.
      * @param row Fila del cambio.
      * @param col Columna del cambio.
      * @param newValue El nuevo valor como String (puede ser vacío).
      */
     public void cellValueChanged(int row, int col, String newValue) {
-        if (view == null) return; // Seguridad
+        if (this.view == null) return; // Seguridad
 
         try {
             int value = newValue.isEmpty() ? 0 : Integer.parseInt(newValue);
@@ -204,30 +202,24 @@ public class GameController {
 
             // Solo procesar si es editable y el valor realmente cambió
             if (cell.getEditable() && cell.getValue() != value) {
-                // 1. Actualizar el Modelo
                 boolean updated = board.setCellValue(row, col, value);
 
                 if (updated) {
-                    // 2. Validar estado y pedir a la Vista que actualice resaltados
-                    validateAndHighlightBoard();
-                    // 3. Comprobar si se ha ganado el juego
-                    checkWinCondition();
+                    this.validateAndHighlightBoard();
+                    // comprobar si se ha ganado el juego
+                    this.checkWinCondition();
                 }
             }
         } catch (NumberFormatException e) {
-            // Esto no debería ocurrir debido al TextFormatter de la vista, pero por robustez:
+            // TODO:  no debería ocurrir debido al TextFormatter de la vista, pero por robustez:
             System.err.println("Error de formato numérico inesperado: " + newValue);
-            // Podríamos limpiar la celda en el modelo si previamente tenía un valor válido
             Cell cell = board.getCell(row, col);
             if(cell.getEditable() && cell.getValue() != 0) {
                 board.setCellValue(row, col, 0);
                 validateAndHighlightBoard(); // Revalidar
             }
         } catch (IllegalArgumentException e) {
-            // Captura valores fuera de rango (0-6) si setCellValue los lanza
             System.err.println("Intento de valor ilegal en ("+row+","+col+"): " + newValue + " - " + e.getMessage());
-            // Podríamos forzar a la vista a refrescarse para revertir el cambio visual si es necesario
-            // view.renderBoard(board.getGridSnapshot());
         }
     }
 
@@ -238,9 +230,9 @@ public class GameController {
      * el resaltado de las celdas erróneas.
      */
     private void validateAndHighlightBoard() {
-        if (view == null) return;
+        if (this.view == null) return;
         Set<Pair<Integer, Integer>> invalidCells = gameState.getInvalidCells();
-        view.highlightErrors(invalidCells); // Ordena a la vista resaltar
+        this.view.highlightErrors(invalidCells); // Ordena a la vista resaltar
     }
 
     /**
@@ -248,12 +240,11 @@ public class GameController {
      * a través de la vista y deshabilita la interacción con el tablero.
      */
     private void checkWinCondition() {
-        if (view == null) return;
+        if (this.view == null) return;
         if (gameState.isGameWon()) {
             System.out.println("¡Juego ganado!");
-            // Notificar a través de la vista
-            view.showWinDialog();
-            view.setGridDisabled(true); // Ordena a la vista deshabilitar la grilla
+            this.view.showWinDialog();
+            this.view.setGridDisabled(true); // Ordena a la vista deshabilitar la grilla
         }
     }
 
