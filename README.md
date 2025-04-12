@@ -1,9 +1,10 @@
-**6x6 dashboard SUDOKU game**
+## 6x6 Sudoku Game
 
-This is a FPOE course project for technology software development career.
+Proyecto del curso Fundamentos de Programacion Orientada a Eventos.
+
+Autores:
+- David Esteban Valencia
+- Santiago David Guerrero
 
 
-
-
-
-Univalle 2025.
+Unversidad del Valle 2025.
