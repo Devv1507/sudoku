@@ -16,12 +16,11 @@ import javafx.util.Pair;
 import univalle.tedesoft.sudoku.views.GameView;
 
 /**
- * Controlador (en patrón MVC) para el juego Sudoku.
+ * Controlador para el juego Sudoku.
  * Conecta la Vista (GameView) con el Modelo (Board, GameState).
  * Maneja la lógica del juego y las acciones del usuario delegadas por la vista.
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
- * @version 1.3 (Refactorizado MVC)
  */
 public class GameController {
 

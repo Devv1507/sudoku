@@ -26,12 +26,11 @@ import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
 /**
- * Representa la ventana principal y la LÓGICA DE VISTA del juego Sudoku (MVC).
+ * Representa la ventana principal y la lógica de vista del juego Sudoku.
  * Carga FXML, renderiza el tablero, maneja interacciones de UI directas
  * y delega eventos lógicos al GameController.
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
- * @version 1.3 (Refactorizado MVC)
  */
 public class GameView extends Stage {
     // Constantes de Estilo
