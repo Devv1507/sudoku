@@ -1,9 +1,10 @@
 package univalle.tedesoft.sudoku.models;
 
 /**
- * Define el contrato para el tablero completo de Sudoku (ej: 6x6).
- * Establece las operaciones fundamentales como inicialización, acceso a celdas/bloques,
- * modificación de valores y obtención de información estructural.
+ * Define el tablero completo de Sudoku (6x6).
+ * Establece las operaciones fundamentales como inicialización, acceso y modificación a celdas/bloques.
+ * @author David Valencia
+ * @author Santiago Guerrero
  */
 public interface IBoard {
     /**
