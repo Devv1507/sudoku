@@ -325,7 +325,7 @@ public class Board implements IBoard {
      */
     public Block getBlockAt(int row, int col) {
          if (row < 0 || row >= GRID_SIZE || col < 0 || col >= GRID_SIZE) {
-            throw new IndexOutOfBoundsException("Índices de celda fuera de rango al buscar bloque: (" + row + ", " + col + ")");
+            throw new IndexOutOfBoundsException("Indices de celda fuera de rango al buscar bloque: (" + row + ", " + col + ")");
         }
         int blockRow = row / BLOCK_ROWS;
         int blockCol = col / BLOCK_COLS;
@@ -334,14 +334,14 @@ public class Board implements IBoard {
 
     /**
      * Obtiene un bloque específico por sus índices de bloque.
-     * @param blockRow Índice de fila del bloque (0 a NUM_BLOCK_ROWS - 1).
-     * @param blockCol Índice de columna del bloque (0 a NUM_BLOCK_COLS - 1).
+     * @param blockRow Indice de fila del bloque (0 a NUM_BLOCK_ROWS - 1).
+     * @param blockCol Indice de columna del bloque (0 a NUM_BLOCK_COLS - 1).
      * @return El bloque solicitado.
      * @throws IndexOutOfBoundsException si los índices de bloque están fuera de rango.
      */
     public Block getBlock(int blockRow, int blockCol) {
          if (blockRow < 0 || blockRow >= NUM_BLOCK_ROWS || blockCol < 0 || blockCol >= NUM_BLOCK_COLS) {
-            throw new IndexOutOfBoundsException("Índices de bloque fuera de rango: (" + blockRow + ", " + blockCol + ")");
+            throw new IndexOutOfBoundsException("Indices de bloque fuera de rango: (" + blockRow + ", " + blockCol + ")");
         }
         return blocks[blockRow][blockCol];
     }
@@ -350,7 +350,6 @@ public class Board implements IBoard {
      * Imprime el tablero actual en la consola (para depuración).
      * Muestra 'X' para celdas vacías y marca las fijas con '*'.
      * Incluye separadores de bloque.
-     * BORRAR LUEGO!!! ************************************************************************************************
      */
     public void printBoard() {
         System.out.println("-------------------------");

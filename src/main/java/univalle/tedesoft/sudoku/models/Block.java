@@ -73,7 +73,7 @@ public class Block implements IBlock {
      */
     public Cell getCell(int localRow, int localCol) {
         if (localRow < 0 || localRow >= BLOCK_ROWS || localCol < 0 || localCol >= BLOCK_COLS) {
-            throw new IndexOutOfBoundsException("Índices locales de celda fuera de rango en bloque: (" + localRow + ", " + localCol + ")");
+            throw new IndexOutOfBoundsException("Indices locales de celda fuera de rango en bloque: (" + localRow + ", " + localCol + ")");
         }
         return this.cells[localRow][localCol];
     }

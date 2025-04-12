@@ -50,8 +50,8 @@ public interface IBoard {
 
     /**
      * Obtiene un bloque específico por sus índices de bloque.
-     * @param blockRow Índice de fila del bloque (0 a NUM_BLOCK_ROWS - 1).
-     * @param blockCol Índice de columna del bloque (0 a NUM_BLOCK_COLS - 1).
+     * @param blockRow Indice de fila del bloque (0 a NUM_BLOCK_ROWS - 1).
+     * @param blockCol Indice de columna del bloque (0 a NUM_BLOCK_COLS - 1).
      * @return el bloque solicitado.
      * @throws IndexOutOfBoundsException si los índices de bloque están fuera de rango.
      */

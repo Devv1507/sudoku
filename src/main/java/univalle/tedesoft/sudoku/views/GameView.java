@@ -352,13 +352,13 @@ public class GameView extends Stage {
         // Estrategia 1: UserData (establecido en createTextField/createPlaceholderPane)
         Object userData = node.getUserData();
         if (userData instanceof int[] coords && coords.length == 2) {
-            // Validar que los índices estén en rango por si acaso
+            // Validar que los indices estén en rango por si acaso
             if (coords[0] >= 0 && coords[0] < GRID_SIZE && coords[1] >= 0 && coords[1] < GRID_SIZE) {
                 return coords;
             }
         }
 
-        // Estrategia 2: Índices de GridPane del propio nodo
+        // Estrategia 2: Indices de GridPane del propio nodo
         Integer colIndex = GridPane.getColumnIndex(node);
         Integer rowIndex = GridPane.getRowIndex(node);
         if (rowIndex != null && colIndex != null) {
@@ -368,7 +368,7 @@ public class GameView extends Stage {
             }
         }
 
-        // Estrategia 3: Índices de GridPane del padre (si el clic fue en contenido interno)
+        // Estrategia 3: Indices de GridPane del padre (si el clic fue en contenido interno)
         Parent parent = node.getParent();
         if (parent != null) {
             colIndex = GridPane.getColumnIndex(parent);
