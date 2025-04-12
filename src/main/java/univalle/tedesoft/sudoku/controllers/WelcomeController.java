@@ -34,7 +34,7 @@ public class WelcomeController {
            - Ayuda: Muestra una pista (si es posible).
            - ?: Muestra esta ventana.
            """; // El contenido ahora reside aquí
-        alert.getDialogPane().setContent(helpContent);
+        alert.setContentText(helpContent);
         alert.showAndWait();
        ;
     }
