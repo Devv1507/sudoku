@@ -55,7 +55,7 @@ public class GameView extends Stage {
     // Estado Interno de la Vista
     private Node[][] nodeGrid = new Node[GRID_SIZE][GRID_SIZE]; // Cache de nodos UI para acceso rápido
     private TextField currentEditingTextField = null; // Campo de texto activo actualmente
-    private Set<Pair<Integer, Integer>> currentErrorCoords = new HashSet<>(); // Coords con error resaltado
+    private Set<Pair<Integer, Integer>> currentErrorCoords = new HashSet<>(); // Coordenadas con error resaltado
     private Set<Pair<Integer, Integer>> currentlyHighlightedCoords = new HashSet<>(); // resaltar celdas por hover
 
     /**
