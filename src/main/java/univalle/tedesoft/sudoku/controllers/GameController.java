@@ -170,7 +170,7 @@ public class GameController {
                 Cell cell = board.getCell(r, c);
                 // Buscar primera celda editable vacía para la que haya sugerencia
                 if (cell.getEditable() && cell.getValue() == 0) {
-                    int suggestion = gameState.getSuggestion(r, c);
+                    int suggestion = gameState.getClue(r, c);
                     if (suggestion > 0) {
                         System.out.println("Pista: Poner " + suggestion + " en (" + r + "," + c + ")");
                         // Actualizar el Modelo
