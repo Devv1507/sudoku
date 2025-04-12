@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.GridPane;
@@ -95,13 +94,11 @@ public class GameController {
     private void startNewGame() {
         if (view == null) return; // No hacer nada si la vista no está lista
 
-        Optional<ButtonType> result = view.showDialog(Alert.AlertType.CONFIRMATION,
-                "Confirmar Reinicio", "Nuevo Juego",
-                "Esto generará un tablero de Sudoku completamente nuevo, perdiendo el progreso actual. ¿Continuar?");
+        // Solicitar confirmación a la vista
+        Optional<ButtonType> result = view.showRestartConfirmationDialog();
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            System.out.println("Nuevo juego iniciado.");
-            initializeGameAndRender(); // Re-inicializa modelo y pide renderizado/validación a la vista
+            this.initializeGameAndRender(); // Re-inicializa modelo y pide renderizado/validación a la vista
         }
     }
 
@@ -111,9 +108,8 @@ public class GameController {
     private void clearUserEntries() {
         if (view == null) return;
 
-        Optional<ButtonType> result = view.showDialog(Alert.AlertType.CONFIRMATION,
-                "Confirmar Limpieza", "Limpiar Entradas",
-                "¿Seguro que deseas borrar todos los números que has ingresado en este tablero?");
+        // Solicitar confirmación a la vista
+        Optional<ButtonType> result = view.showClearConfirmationDialog();
 
         if (result.isPresent() && result.get() == ButtonType.OK) {
             System.out.println("Limpiando entradas del usuario...");
@@ -132,7 +128,7 @@ public class GameController {
             if (changed) {
                 // Pedir a la Vista que refleje los cambios del modelo y revalide
                 this.view.renderBoard(this.board.getGridSnapshot());
-                this.view.highlightErrors(this.gameState.getInvalidCells());
+                validateAndHighlightBoard();
             }
             this.view.setGridDisabled(false); // Asegurar que la grilla esté activa
             System.out.println("Entradas del usuario limpiadas.");
@@ -159,10 +155,9 @@ public class GameController {
         boolean clueFound = false;
 
         int emptyCells = board.countEmptyEditableCells();
-        //Si solo hay un espacio vacío deja de dr pistas.
+        // Si solo hay un espacio vacío (o menos), no se puede dar pista sin resolverlo
         if (emptyCells <= 1) {
-            view.showDialog(Alert.AlertType.INFORMATION, "Pista", null,
-                    "No se puede dar una pista más sin completar el tablero.");
+            view.showNoMoreCluesDialog();
             return;
         }
         for (int r = 0; r < Board.GRID_SIZE; r++) {
@@ -177,7 +172,7 @@ public class GameController {
                         this.board.setCellValue(r, c, suggestion);
                         // Pedir a la Vista que renderice y valide
                         this.view.renderBoard(this.board.getGridSnapshot());
-                        this.view.highlightErrors(this.gameState.getInvalidCells());
+                        validateAndHighlightBoard(); // Llamar a validación aquí como en tu versión original
                         // TODO: Idealmente, pedir a la vista que enfoque la celda: view.focusCell(r, c);
                         clueFound = true;
                         break; // Salir del bucle interno
@@ -188,8 +183,8 @@ public class GameController {
         }
 
         if (!clueFound) {
-            view.showDialog(Alert.AlertType.INFORMATION, "Pista", null,
-                    "No hay pistas obvias disponibles o el tablero está lleno/inválido.");
+            // Informar al usuario a través de la vista usando el método específico
+            view.showNoObviousCluesDialog();
         }
     }
 
@@ -256,8 +251,8 @@ public class GameController {
         if (view == null) return;
         if (gameState.isGameWon()) {
             System.out.println("¡Juego ganado!");
-            view.showDialog(Alert.AlertType.INFORMATION, "¡Felicidades!", "¡Sudoku Resuelto!",
-                    "¡Has completado el Sudoku exitosamente!");
+            // Notificar a través de la vista
+            view.showWinDialog();
             view.setGridDisabled(true); // Ordena a la vista deshabilitar la grilla
         }
     }
