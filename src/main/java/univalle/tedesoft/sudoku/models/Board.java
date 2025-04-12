@@ -53,6 +53,7 @@ public class Board implements IBoard {
      * @see Block
      */
     private final Block[][] blocks;
+    public int threeCount = 6;
 
     /**
      * Constructor del tablero. Inicializa la cuadrícula de celdas vacías y los bloques.
@@ -267,7 +268,12 @@ public class Board implements IBoard {
                  if (isFixed[row][col]) {
                      this.grid[row][col].setValue(this.initialGridState[row][col].getValue()); // Restaurar valor de la solución
                      this.grid[row][col].setEditable(false);                         // Marcar como no editable
-                 } else {
+
+                 } else if(col == 1 || col==2){
+                     this.grid[row][col].setValue(this.initialGridState[row][col].getValue()); // Restaurar valor de la solución
+                     this.grid[row][col].setEditable(false);
+
+                 }else {
                      this.grid[row][col].setValue(0);     // Vaciar celda
                      this.grid[row][col].setEditable(true); // Marcar como editable
                  }
@@ -276,6 +282,16 @@ public class Board implements IBoard {
           if (fixedCellsCount < targetFixedCells) {
              System.err.println("Advertencia: No se pudieron fijar las " + targetFixedCells + " celdas deseadas. Faltaron " + (targetFixedCells - fixedCellsCount));
           }
+          //int initValue=6;
+          for (int row = 0; row < GRID_SIZE; row++) {
+              for (int col = 0; col < GRID_SIZE; col++) {
+                  //System.out.println(this.grid[row][col].getValue());
+                  if(this.grid[row][col].getValue()== 3){
+                      threeCount--;
+                  }
+              }
+          }
+          System.out.println(threeCount);
     }
 
     /**
@@ -295,7 +311,6 @@ public class Board implements IBoard {
 
     /**
      * Establece el valor de una celda en la posición global especificada, si es editable.
-     *
      * @param row   La fila global (0 a 5).
      * @param col   La columna global (0 a 5).
      * @param value El valor a establecer (0 para vacío, 1-6).

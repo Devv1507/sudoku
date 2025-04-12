@@ -51,6 +51,7 @@ public class GameView extends Stage {
     // Referencias
     private final GridPane sudokuGridPane;
     private final GameController controller;
+    public int contOfThree= 0;
 
     // Estado Interno de la Vista
     private Node[][] nodeGrid = new Node[GRID_SIZE][GRID_SIZE]; // Cache de nodos UI para acceso rápido
@@ -103,6 +104,7 @@ public class GameView extends Stage {
         currentEditingTextField = null;
         // Limpiar resaltados de hover anteriores
         this.currentlyHighlightedCoords.clear();
+
 
         for (int row = 0; row < GRID_SIZE; row++) {
             for (int col = 0; col < GRID_SIZE; col++) {
@@ -174,6 +176,12 @@ public class GameView extends Stage {
         if (!newErrorCoords.isEmpty()) {
             showDialog(Alert.AlertType.ERROR, "Errores detectados",
                     "Algunas celdas son inválidas", "Revisa los valores marcados en rojo.");
+        }
+        for (Pair<Integer, Integer> coord : changedCoords) {
+            if(coord.getValue() == 3){
+                contOfThree++;
+                System.out.println(coord.getValue());
+            }
         }
     }
 
@@ -261,6 +269,7 @@ public class GameView extends Stage {
 
         textField.requestFocus();
         this.currentEditingTextField = textField; // Marcar como campo en edición
+
     }
 
     /**
@@ -311,6 +320,10 @@ public class GameView extends Stage {
             if (!isNowFocused && textField.getText().isEmpty()) {
                 replaceTextFieldWithPlaceholder(textField, row, col);
             } else if (!isNowFocused && this.currentEditingTextField == textField) {
+                if(textField.getText().equals("3")){
+                    contOfThree++;
+                }
+                System.out.println(contOfThree);
                 this.currentEditingTextField = null;
             } else if (isNowFocused) {
                 this.currentEditingTextField = textField;
@@ -435,6 +448,9 @@ public class GameView extends Stage {
             rightBorderColor = (col + 1) % BLOCK_COLS == 0 ? BORDER_COLOR_BLOCK : BORDER_COLOR_NORMAL;
             bottomBorderColor = (row + 1) % BLOCK_ROWS == 0 ? BORDER_COLOR_BLOCK : BORDER_COLOR_NORMAL;
             leftBorderColor = BORDER_COLOR_NORMAL;
+
+            //contOfThree++;
+            //System.out.println(contOfThree);
         }
 
         // Añadir estilos de borde al builder
@@ -634,6 +650,7 @@ public class GameView extends Stage {
 
         alert.showAndWait(); // Mostrar y esperar, no necesitamos el resultado
     }
+
 
     // -- Patrón Singleton
 

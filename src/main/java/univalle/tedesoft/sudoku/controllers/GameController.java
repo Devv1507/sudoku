@@ -29,12 +29,20 @@ public class GameController {
     private GameState gameState;
     private GameView view;
 
-    @FXML private Button cleanButton;
-    @FXML private Button clueButton;
-    @FXML private Button instructionsButton;
-    @FXML private Button restartButton;
-    @FXML private GridPane sudokuGridPane;
+    @FXML
+    private Button cleanButton;
+    @FXML
+    private Button clueButton;
+    @FXML
+    private Button instructionsButton;
+    @FXML
+    private Button restartButton;
+    @FXML
+    private GridPane sudokuGridPane;
+    @FXML
+    private Label tresFaltantes;
     private int pistas = 0;
+    private int cont= 6;
 
     /**
      * Inicializa el modelo y configura los manejadores de eventos de los botones.
@@ -50,7 +58,8 @@ public class GameController {
         this.cleanButton.setOnAction(event -> clearUserEntries());
         this.clueButton.setOnAction(event -> showClue());
         this.instructionsButton.setOnAction(event -> showHelp());
-
+        //this.tresFaltantes.setText(String.valueOf(cont- (board.threeCount+ this.view.contOfThree)));
+        this.tresFaltantes.setText(String.valueOf(cont));
         if (this.view != null) {
             initializeGameAndRender();
         }
@@ -195,8 +204,9 @@ public class GameController {
     /**
      * Llamado por GameView cuando el texto de un TextField cambia.
      * Actualiza el modelo y desencadena la validación y posible condición de victoria.
-     * @param row Fila del cambio.
-     * @param col Columna del cambio.
+     *
+     * @param row      Fila del cambio.
+     * @param col      Columna del cambio.
      * @param newValue El nuevo valor como String (puede ser vacío).
      */
     public void cellValueChanged(int row, int col, String newValue) {
@@ -220,12 +230,12 @@ public class GameController {
             // TODO:  no debería ocurrir debido al TextFormatter de la vista, pero por robustez:
             System.err.println("Error de formato numérico inesperado: " + newValue);
             Cell cell = board.getCell(row, col);
-            if(cell.getEditable() && cell.getValue() != 0) {
+            if (cell.getEditable() && cell.getValue() != 0) {
                 board.setCellValue(row, col, 0);
                 validateAndHighlightBoard(); // Revalidar
             }
         } catch (IllegalArgumentException e) {
-            System.err.println("Intento de valor ilegal en ("+row+","+col+"): " + newValue + " - " + e.getMessage());
+            System.err.println("Intento de valor ilegal en (" + row + "," + col + "): " + newValue + " - " + e.getMessage());
         }
     }
 
@@ -256,6 +266,7 @@ public class GameController {
 
     /**
      * Permite a la vista consultar si una celda es editable (necesario para restoreBaseStyle).
+     *
      * @param row Fila.
      * @param col Columna.
      * @return true si la celda en el modelo es editable, false en caso contrario.
@@ -266,4 +277,21 @@ public class GameController {
         }
         return false; // Valor por defecto o lanzar excepción si se prefiere
     }
+    /*
+    private int showThrees() {
+        int initValue = 6;
+        for (int row = 0; row < Board.GRID_SIZE; row++) {
+            for (int col = 0; col < Board.GRID_SIZE; col++) {
+                Cell cell = board.getCell(row, col);
+                if (cell.getValue() == 3) {
+                    initValue--;
+                }
+            }
+
+        }
+        System.out.println(initValue);
+        return initValue;
+    }
+
+     */
 }
