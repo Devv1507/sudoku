@@ -11,7 +11,7 @@ import javafx.util.Pair;
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
  */
-public class Block {
+public class Block implements IBlock {
     /**
      * Constante del número de filas en un bloque.
      * En este caso, 2 filas.

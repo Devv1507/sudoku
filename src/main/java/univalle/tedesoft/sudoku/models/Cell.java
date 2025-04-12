@@ -6,7 +6,7 @@ package univalle.tedesoft.sudoku.models;
  * @author David Esteban Valencia
  * @author Santiago David Guerrero
  */
-public class Cell {
+public class Cell implements ICell {
     private int value;
     private boolean isEditable;
 
