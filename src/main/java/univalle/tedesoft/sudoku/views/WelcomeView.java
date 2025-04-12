@@ -16,7 +16,7 @@ public class WelcomeView extends Stage {
         );
         Parent root = fxmlLoader.load();
         Scene scene = new Scene(root, 608, 400);
-        this.setTitle("Craps Game - Welcome!");
+        this.setTitle("Sudoku 6x6 - Welcome!");
         this.setScene(scene);
     }
 
