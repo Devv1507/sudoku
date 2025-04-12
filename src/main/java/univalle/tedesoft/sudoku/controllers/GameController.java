@@ -161,15 +161,8 @@ public class GameController {
             this.view.showNoMoreCluesDialog();
             return;
         }
-        if (pistas == 10) {
-            Label label = new Label("😔 Realmente quieres ganar así?");
-            label.setStyle("-fx-font-size: 20px;");
-
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Pista");
-            alert.setHeaderText(null);
-            alert.getDialogPane().setContent(label);
-            alert.showAndWait();
+        if (this.pistas >= 10) {
+            this.view.showMaxCluesReachedDialog();
             return;
         }
         for (int row = 0; row < Board.GRID_SIZE; row++) {
