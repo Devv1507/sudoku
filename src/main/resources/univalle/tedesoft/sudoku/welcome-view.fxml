@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: #6FB9E6;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="univalle.tedesoft.sudoku.controllers.WelcomeController">
+   <children>
+      <Label layoutX="178.0" layoutY="86.0" text="Bienvenido!">
+         <font>
+            <Font size="44.0" />
+         </font>
+      </Label>
+      <Button layoutX="243.0" layoutY="216.0" mnemonicParsing="false" onAction="#onActionStartButton" prefHeight="45.0" prefWidth="115.0" style="-fx-background-color: #1E3A5F;" text="Iniciar" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="23.0" />
+         </font>
+      </Button>
+      <Button layoutX="223.0" layoutY="296.0" mnemonicParsing="false" onAction="#onInstruction" style="-fx-background-color: #1E3A5F;" text="Instrucciones" textFill="WHITE">
+         <font>
+            <Font name="System Bold" size="19.0" />
+         </font>
+      </Button>
+      <Label layoutX="197.0" layoutY="158.0" prefHeight="36.0" prefWidth="207.0" text="PULSA INICIAR PARA COMENZAR" />
+   </children>
+</AnchorPane>

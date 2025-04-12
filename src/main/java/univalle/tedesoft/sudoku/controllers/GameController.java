@@ -1,5 +1,6 @@
 package univalle.tedesoft.sudoku.controllers;
 
+import javafx.scene.control.Label;
 import univalle.tedesoft.sudoku.models.Board;
 import univalle.tedesoft.sudoku.models.Cell;
 import univalle.tedesoft.sudoku.models.GameState;
@@ -9,11 +10,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.layout.GridPane;
 import javafx.util.Pair;
-import univalle.tedesoft.sudoku.views.GameView;
 
 /**
  * Controlador para el juego Sudoku.
@@ -33,6 +34,7 @@ public class GameController {
     @FXML private Button instructionsButton;
     @FXML private Button restartButton;
     @FXML private GridPane sudokuGridPane;
+    private int pistas = 0;
 
     /**
      * Inicializa el modelo y configura los manejadores de eventos de los botones.
@@ -154,9 +156,13 @@ public class GameController {
         boolean clueFound = false;
 
         int emptyCells = board.countEmptyEditableCells();
-        // Si solo hay un espacio vacío (o menos), no se puede dar pista sin resolverlo
+        //Si solo hay un espacio vacío deja de dr pistas.
         if (emptyCells <= 1) {
             this.view.showNoMoreCluesDialog();
+            return;
+        }
+        if (this.pistas >= 10) {
+            this.view.showMaxCluesReachedDialog();
             return;
         }
         for (int row = 0; row < Board.GRID_SIZE; row++) {
@@ -173,7 +179,8 @@ public class GameController {
                         this.view.renderBoard(this.board.getGridSnapshot());
                         this.validateAndHighlightBoard();
                         clueFound = true;
-                        break;
+                        pistas++;
+                        break; // Salir del bucle interno
                     }
                 }
             }
@@ -186,7 +193,7 @@ public class GameController {
     }
 
     /**
-     * Llamado por Gamethis.view cuando el texto de un TextField cambia.
+     * Llamado por GameView cuando el texto de un TextField cambia.
      * Actualiza el modelo y desencadena la validación y posible condición de victoria.
      * @param row Fila del cambio.
      * @param col Columna del cambio.

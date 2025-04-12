@@ -609,6 +609,32 @@ public class GameView extends Stage {
                 "¿Seguro que deseas borrar todos los números que has ingresado en este tablero?");
     }
 
+    /**
+     * Muestra un diálogo especial cuando el usuario ha solicitado demasiadas pistas.
+     */
+    public void showMaxCluesReachedDialog() {
+        // Crear el contenido personalizado como en el PR, pero dentro de la vista
+        Label label = new Label("😔 ¿Realmente quieres ganar así?");
+        label.setStyle("-fx-font-size: 20px;"); // Puedes usar una constante si lo prefieres
+
+        // Crear y configurar la alerta específica aquí
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Demasiadas Pistas");
+        alert.setHeaderText(null); // Sin cabecera
+        // Establecer el Label como contenido gráfico principal
+        alert.getDialogPane().setContent(label);
+
+        // Hacerlo modal respecto a la ventana principal (importante)
+        if (this.getScene() != null && this.getScene().getWindow() != null) {
+            alert.initOwner(this.getScene().getWindow());
+        } else {
+            // Fallback por si la escena/ventana no está lista aún (poco probable aquí)
+            System.err.println("Advertencia: No se pudo establecer el owner para el diálogo de max pistas.");
+        }
+
+        alert.showAndWait(); // Mostrar y esperar, no necesitamos el resultado
+    }
+
     // -- Patrón Singleton
 
     private static class GameViewHolder {
