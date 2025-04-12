@@ -58,6 +58,8 @@ public class GameView extends Stage {
     private Set<Pair<Integer, Integer>> currentErrorCoords = new HashSet<>(); // Coordenadas con error resaltado
     private Set<Pair<Integer, Integer>> currentlyHighlightedCoords = new HashSet<>(); // resaltar celdas por hover
 
+    public int threeCountLacked = 0;
+
     /**
      * Constructor privado Singleton. Carga el archivo FXML.
      * @throws IOException Si falla la carga FXML.
@@ -77,6 +79,9 @@ public class GameView extends Stage {
 
         // Obtenemos la referencia al GridPane desde el controlador
         this.sudokuGridPane = this.controller.getSudokuGridPane();
+
+//        this.threeCountLacked = this.controller.showThreeLack();
+
         if (this.sudokuGridPane == null) {
             throw new IOException("El GridPane no se pasó correctamente al controlador.");
         }
@@ -88,6 +93,10 @@ public class GameView extends Stage {
         this.setTitle("6x6 Sudoku Game");
         this.setScene(scene);
         this.setResizable(false);
+    }
+
+    public int getThreeCountLacked() {
+        return this.threeCountLacked;
     }
 
     /**
@@ -104,11 +113,15 @@ public class GameView extends Stage {
         // Limpiar resaltados de hover anteriores
         this.currentlyHighlightedCoords.clear();
 
+        int threeCount = 0;
         for (int row = 0; row < GRID_SIZE; row++) {
             for (int col = 0; col < GRID_SIZE; col++) {
                 Cell cellData = gridData[row][col];
                 Node cellNode;
 
+                if (cellData.getValue() == 3) {
+                    this.threeCountLacked++;
+                }
                 if (!cellData.getEditable()) {
                     // Celda Fija: Crear un Label
                     Label label = new Label(String.valueOf(cellData.getValue()));
@@ -146,6 +159,7 @@ public class GameView extends Stage {
                 this.updateCellStyle(r, c);
             }
         }
+        System.out.println(this.threeCountLacked);
 
         // Reaplicar el estado de errores visualmente
         highlightErrors(this.currentErrorCoords);
@@ -163,6 +177,7 @@ public class GameView extends Stage {
 
         // Determinar qué celdas cambiaron su estado de error
         Set<Pair<Integer, Integer>> changedCoords = new HashSet<>(oldErrorCoords);
+
         // Unión de coordenadas viejas y nuevas
         changedCoords.addAll(newErrorCoords);
 
@@ -311,14 +326,24 @@ public class GameView extends Stage {
             if (!isNowFocused && textField.getText().isEmpty()) {
                 replaceTextFieldWithPlaceholder(textField, row, col);
             } else if (!isNowFocused && this.currentEditingTextField == textField) {
+                if (textField.getText().equals("3")) {
+                    this.threeCountLacked--;
+                }
                 this.currentEditingTextField = null;
             } else if (isNowFocused) {
                 this.currentEditingTextField = textField;
             }
         });
+
+        System.out.println(threeCountLacked);
+
         // Añadir handlers de hover
         textField.setOnMouseEntered(this::handleMouseEntered);
         textField.setOnMouseExited(this::handleMouseExited);
+
+        if (textField.getText().toString() == "3") {
+            System.out.println("Se agrego un 3");
+        }
 
         return textField;
     }
@@ -457,6 +482,11 @@ public class GameView extends Stage {
         // Aplicar el estilo final al nodo
         node.setStyle(styleBuilder.toString().trim());
     }
+
+//    public int getCounterLacked() {
+//        Node node = this.nodeGrid[row][col];
+//        Label label = (Label node)(node.getAccessibleText())
+//    }
 
 
     /**

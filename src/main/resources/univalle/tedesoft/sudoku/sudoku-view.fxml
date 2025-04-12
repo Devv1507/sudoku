@@ -23,6 +23,8 @@
                <effect>
                   <DropShadow />
                </effect></Button>
+            <Label text="Numeros 3 restantes: "></Label>
+            <Label text="" fx:id="lackedThreeCounter"></Label>
          </children>
          <VBox.margin>
             <Insets />

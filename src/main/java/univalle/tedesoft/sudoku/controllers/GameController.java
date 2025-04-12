@@ -34,7 +34,9 @@ public class GameController {
     @FXML private Button instructionsButton;
     @FXML private Button restartButton;
     @FXML private GridPane sudokuGridPane;
+    @FXML private Label lackedThreeCounter;
     private int pistas = 0;
+    private int threeCount = 0;
 
     /**
      * Inicializa el modelo y configura los manejadores de eventos de los botones.
@@ -72,6 +74,7 @@ public class GameController {
      */
     private void initializeGameAndRender() {
         this.board.initializeBoard(); // Prepara el modelo
+        this.threeCount = this.board.threeCount;
         if (this.view != null) {
             this.view.renderBoard(this.board.getGridSnapshot()); // Pide renderizar
             this.view.highlightErrors(this.gameState.getInvalidCells()); // Pide validar visualmente
@@ -134,6 +137,7 @@ public class GameController {
             this.view.setGridDisabled(false); // Asegurar que la grilla esté activa
             System.out.println("Entradas del usuario limpiadas.");
         }
+        this.showThreeLack();
     }
 
     /**
@@ -169,6 +173,7 @@ public class GameController {
             for (int col = 0; col < Board.GRID_SIZE; col++) {
                 Cell cell = board.getCell(row, col);
                 // Buscar primera celda editable vacía para la que haya sugerencia
+
                 if (cell.getEditable() && cell.getValue() == 0) {
                     int suggestion = gameState.getClue(row, col);
                     if (suggestion > 0) {
@@ -182,6 +187,9 @@ public class GameController {
                         pistas++;
                         break; // Salir del bucle interno
                     }
+                }
+                if (cell.getValue() == 3) {
+                    this.threeCount++;
                 }
             }
             if (clueFound) break;
@@ -265,5 +273,18 @@ public class GameController {
             return board.getCell(row, col).getEditable();
         }
         return false; // Valor por defecto o lanzar excepción si se prefiere
+    }
+
+    /**
+     * Metodo para contar cuantos 3 faltan
+     */
+    public void showThreeLack() {
+//        int lackedThrees = 6 - this.threeCount;
+        if (this.view != null) return;
+
+        int lackedThrees = this.view.getThreeCountLacked();
+
+        this.lackedThreeCounter.setText(String.valueOf(lackedThrees));
+//        return lackedThrees;
     }
 }
