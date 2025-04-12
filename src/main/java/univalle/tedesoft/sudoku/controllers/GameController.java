@@ -1,5 +1,6 @@
 package univalle.tedesoft.sudoku.controllers;
 
+import javafx.scene.control.Label;
 import univalle.tedesoft.sudoku.models.Board;
 import univalle.tedesoft.sudoku.models.Cell;
 import univalle.tedesoft.sudoku.models.GameState;
@@ -181,8 +182,14 @@ public class GameController {
             return;
         }
         if (pistas == 10) {
-            view.showDialog(Alert.AlertType.INFORMATION, "Realmente la necesitas? ", null,
-                    "Realmente quieres ganar asi?.");
+            Label label = new Label("😔 Realmente quieres ganar así?");
+            label.setStyle("-fx-font-size: 20px;");
+
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Pista");
+            alert.setHeaderText(null);
+            alert.getDialogPane().setContent(label);
+            alert.showAndWait();
             return;
         }
         for (int r = 0; r < Board.GRID_SIZE; r++) {
